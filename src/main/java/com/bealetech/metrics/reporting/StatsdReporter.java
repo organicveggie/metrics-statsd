@@ -2,7 +2,6 @@ package com.bealetech.metrics.reporting;
 
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.*;
-import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.stats.Snapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +99,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             outputData.reset();
             writer = new BufferedWriter(new OutputStreamWriter(this.outputData));
 
-            final long epoch = clock.time() / 1000;
+            final long epoch = clock.getTime() / 1000;
             if (this.printVMMetrics) {
                 printVmMetrics(epoch);
             }
@@ -134,20 +133,20 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     protected void printVmMetrics(long epoch) {
         // Memory
-        sendFloat("jvm.memory.totalInit", StatType.GAUGE, vm.totalInit());
-        sendFloat("jvm.memory.totalUsed", StatType.GAUGE, vm.totalUsed());
-        sendFloat("jvm.memory.totalMax", StatType.GAUGE, vm.totalMax());
-        sendFloat("jvm.memory.totalCommitted", StatType.GAUGE, vm.totalCommitted());
+        sendFloat("jvm.memory.totalInit", StatType.GAUGE, vm.getTotalInit());
+        sendFloat("jvm.memory.totalUsed", StatType.GAUGE, vm.getTotalUsed());
+        sendFloat("jvm.memory.totalMax", StatType.GAUGE, vm.getTotalMax());
+        sendFloat("jvm.memory.totalCommitted", StatType.GAUGE, vm.getTotalCommitted());
 
-        sendFloat("jvm.memory.heapInit", StatType.GAUGE, vm.heapInit());
-        sendFloat("jvm.memory.heapUsed", StatType.GAUGE, vm.heapUsed());
-        sendFloat("jvm.memory.heapMax", StatType.GAUGE, vm.heapMax());
-        sendFloat("jvm.memory.heapCommitted", StatType.GAUGE, vm.heapCommitted());
+        sendFloat("jvm.memory.heapInit", StatType.GAUGE, vm.getHeapInit());
+        sendFloat("jvm.memory.heapUsed", StatType.GAUGE, vm.getHeapUsed());
+        sendFloat("jvm.memory.heapMax", StatType.GAUGE, vm.getHeapMax());
+        sendFloat("jvm.memory.heapCommitted", StatType.GAUGE, vm.getHeapCommitted());
 
-        sendFloat("jvm.memory.heapUsage", StatType.GAUGE, vm.heapUsage());
-        sendFloat("jvm.memory.nonHeapUsage", StatType.GAUGE, vm.nonHeapUsage());
+        sendFloat("jvm.memory.heapUsage", StatType.GAUGE, vm.getHeapUsage());
+        sendFloat("jvm.memory.nonHeapUsage", StatType.GAUGE, vm.getNonHeapUsage());
 
-        for (Map.Entry<String, Double> pool : vm.memoryPoolUsage().entrySet()) {
+        for (Map.Entry<String, Double> pool : vm.getMemoryPoolUsage().entrySet()) {
             sendFloat("jvm.memory.memory_pool_usages." + sanitizeString(pool.getKey()), StatType.GAUGE, pool.getValue());
         }
 
@@ -163,16 +162,16 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             sendFloat("jvm.buffers.mapped.totalCapacity", StatType.GAUGE, bufferPoolStats.get("mapped").getTotalCapacity());
         }
 
-        sendInt("jvm.daemon_thread_count", StatType.GAUGE, vm.daemonThreadCount());
-        sendInt("jvm.thread_count", StatType.GAUGE, vm.threadCount());
-        sendInt("jvm.uptime", StatType.GAUGE, vm.uptime());
-        sendFloat("jvm.fd_usage", StatType.GAUGE, vm.fileDescriptorUsage());
+        sendInt("jvm.daemon_thread_count", StatType.GAUGE, vm.getDaemonThreadCount());
+        sendInt("jvm.thread_count", StatType.GAUGE, vm.getThreadCount());
+        sendInt("jvm.uptime", StatType.GAUGE, vm.getUptime());
+        sendFloat("jvm.fd_usage", StatType.GAUGE, vm.getFileDescriptorUsage());
 
-        for (Map.Entry<Thread.State, Double> entry : vm.threadStatePercentages().entrySet()) {
+        for (Map.Entry<Thread.State, Double> entry : vm.getThreadStatePercentages().entrySet()) {
             sendFloat("jvm.thread-states." + entry.getKey().toString().toLowerCase(), StatType.GAUGE, entry.getValue());
         }
 
-        for (Map.Entry<String, VirtualMachineMetrics.GarbageCollectorStats> entry : vm.garbageCollectors().entrySet()) {
+        for (Map.Entry<String, VirtualMachineMetrics.GarbageCollectorStats> entry : vm.getGarbageCollectors().entrySet()) {
             final String name = "jvm.gc." + sanitizeString(entry.getKey());
             sendInt(name + ".time", StatType.GAUGE, entry.getValue().getTime(TimeUnit.MILLISECONDS));
             sendInt(name + ".runs", StatType.GAUGE, entry.getValue().getRuns());
@@ -180,7 +179,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     }
 
     protected void printRegularMetrics(long epoch) {
-        for (Map.Entry<String,SortedMap<MetricName,Metric>> entry : getMetricsRegistry().groupedMetrics(predicate).entrySet()) {
+        for (Map.Entry<String,SortedMap<MetricName,Metric>> entry : getMetricsRegistry().getGroupedMetrics(predicate).entrySet()) {
             for (Map.Entry<MetricName, Metric> subEntry : entry.getValue().entrySet()) {
                 final Metric metric = subEntry.getValue();
                 if (metric != null) {
@@ -197,16 +196,16 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     @Override
     public void processMeter(MetricName name, Metered meter, Long epoch) throws Exception {
         final String sanitizedName = sanitizeName(name);
-        sendInt(sanitizedName + ".count", StatType.GAUGE, meter.count());
-        sendFloat(sanitizedName + ".meanRate", StatType.TIMER, meter.meanRate());
-        sendFloat(sanitizedName + ".1MinuteRate", StatType.TIMER, meter.oneMinuteRate());
-        sendFloat(sanitizedName + ".5MinuteRate", StatType.TIMER, meter.fiveMinuteRate());
-        sendFloat(sanitizedName + ".15MinuteRate", StatType.TIMER, meter.fifteenMinuteRate());
+        sendInt(sanitizedName + ".count", StatType.GAUGE, meter.getCount());
+        sendFloat(sanitizedName + ".meanRate", StatType.TIMER, meter.getMeanRate());
+        sendFloat(sanitizedName + ".1MinuteRate", StatType.TIMER, meter.getOneMinuteRate());
+        sendFloat(sanitizedName + ".5MinuteRate", StatType.TIMER, meter.getFiveMinuteRate());
+        sendFloat(sanitizedName + ".15MinuteRate", StatType.TIMER, meter.getFifteenMinuteRate());
     }
 
     @Override
     public void processCounter(MetricName name, Counter counter, Long epoch) throws Exception {
-        sendInt(sanitizeName(name) + ".count", StatType.GAUGE, counter.count());
+        sendInt(sanitizeName(name) + ".count", StatType.GAUGE, counter.getCount());
     }
 
     @Override
@@ -226,14 +225,14 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     @Override
     public void processGauge(MetricName name, Gauge<?> gauge, Long epoch) throws Exception {
-        sendObj(sanitizeName(name) + ".count", StatType.GAUGE, gauge.value());
+        sendObj(sanitizeName(name) + ".count", StatType.GAUGE, gauge.getValue());
     }
 
     protected void sendSummarizable(String sanitizedName, Summarizable metric) throws IOException {
-        sendFloat(sanitizedName + ".min", StatType.TIMER, metric.min());
-        sendFloat(sanitizedName + ".max", StatType.TIMER, metric.max());
-        sendFloat(sanitizedName + ".mean", StatType.TIMER, metric.mean());
-        sendFloat(sanitizedName + ".stddev", StatType.TIMER, metric.stdDev());
+        sendFloat(sanitizedName + ".min", StatType.TIMER, metric.getMin());
+        sendFloat(sanitizedName + ".max", StatType.TIMER, metric.getMax());
+        sendFloat(sanitizedName + ".mean", StatType.TIMER, metric.getMean());
+        sendFloat(sanitizedName + ".stddev", StatType.TIMER, metric.getStdDev());
     }
 
     protected void sendSampling(String sanitizedName, Sampling metric) throws IOException {
