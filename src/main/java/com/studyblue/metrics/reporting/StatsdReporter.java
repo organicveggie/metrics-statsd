@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
@@ -304,7 +304,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 statTypeStr = "ms";
                 break;
         }
-        
+
         try {
             if (!prefix.isEmpty()) {
                 writer.write(prefix);
@@ -333,19 +333,25 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
         @Override
         public DatagramSocket get() throws Exception {
-            return new DatagramSocket(new InetSocketAddress(this.host, this.port));
+            return new DatagramSocket();
         }
-        
+
         @Override
         public DatagramPacket newPacket(ByteArrayOutputStream out) {
             byte[] dataBuffer;
+
             if (out != null) {
                 dataBuffer = out.toByteArray();
             }
             else {
                 dataBuffer = new byte[8192];
             }
-            return new DatagramPacket(dataBuffer, dataBuffer.length);
+
+            try {
+                return new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getByName(this.host), this.port);
+            } catch (Exception e) {
+                return null;
+            }
         }
     }
 }
