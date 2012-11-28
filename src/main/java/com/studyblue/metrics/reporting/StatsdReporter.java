@@ -26,6 +26,8 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
@@ -49,8 +51,8 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     private boolean printVMMetrics = true;
 
     public interface UDPSocketProvider {
-        DatagramSocket get() throws Exception;
-        DatagramPacket newPacket(ByteArrayOutputStream out);
+        DatagramSocket get() throws SocketException;
+        DatagramPacket newPacket(ByteArrayOutputStream out) throws SocketException;
     }
 
     public StatsdReporter(String host, int port) throws IOException {
@@ -78,7 +80,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm) throws IOException {
-        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, "graphite-reporter");
+        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, "statsd-reporter");
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm, String name) throws IOException {
@@ -128,9 +130,9 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             socket.send(packet);
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Error writing to Graphite", e);
+                LOG.debug("Error writing to Statsd", e);
             } else {
-                LOG.warn("Error writing to Graphite: {}", e.getMessage());
+                LOG.warn("Error writing to Statsd: {}", e.getMessage());
             }
             if (writer != null) {
                 try {
@@ -304,7 +306,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 statTypeStr = "ms";
                 break;
         }
-        
+
         try {
             if (!prefix.isEmpty()) {
                 writer.write(prefix);
@@ -317,7 +319,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             writer.write('\n');
             writer.flush();
         } catch (IOException e) {
-            LOG.error("Error sending to Graphite:", e);
+            LOG.error("Error sending to Statsd:", e);
         }
     }
 
@@ -332,12 +334,12 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         }
 
         @Override
-        public DatagramSocket get() throws Exception {
-            return new DatagramSocket(new InetSocketAddress(this.host, this.port));
+        public DatagramSocket get() throws SocketException {
+            return new DatagramSocket();
         }
-        
+
         @Override
-        public DatagramPacket newPacket(ByteArrayOutputStream out) {
+        public DatagramPacket newPacket(ByteArrayOutputStream out) throws SocketException {
             byte[] dataBuffer;
             if (out != null) {
                 dataBuffer = out.toByteArray();
@@ -345,7 +347,10 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             else {
                 dataBuffer = new byte[8192];
             }
-            return new DatagramPacket(dataBuffer, dataBuffer.length);
+
+            return new DatagramPacket(dataBuffer, dataBuffer.length, new InetSocketAddress(this.host, this.port));
         }
+
+
     }
 }
