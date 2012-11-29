@@ -5,7 +5,7 @@
     <groupId>studyblue</groupId>
     <artifactId>metrics-statsd</artifactId>
     <name>Metrics Statsd Support</name>
-    <version>2.1.3.0</version>
+    <version>2.1.3.1</version>
     <packaging>jar</packaging>
 
     <properties>
