@@ -46,6 +46,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     protected Writer writer;
     protected ByteArrayOutputStream outputData;
 
+    private boolean prependNewline = false;
     private boolean printVMMetrics = true;
 
     public interface UDPSocketProvider {
@@ -113,6 +114,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         try {
             socket = this.socketProvider.get();
             outputData.reset();
+            prependNewline = false;
             writer = new BufferedWriter(new OutputStreamWriter(this.outputData));
 
             final long epoch = clock.time() / 1000;
@@ -306,6 +308,9 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         }
 
         try {
+            if (prependNewline) {
+                writer.write("\n");
+            }
             if (!prefix.isEmpty()) {
                 writer.write(prefix);
             }
@@ -314,7 +319,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             writer.write(value);
             writer.write("|");
             writer.write(statTypeStr);
-            writer.write('\n');
+            prependNewline = true;
             writer.flush();
         } catch (IOException e) {
             LOG.error("Error sending to Graphite:", e);
