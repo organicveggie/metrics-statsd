@@ -11,7 +11,7 @@ Versions 2.1.3.0 and earlier directly matched the versioning of official release
 # Setting Up Maven
 ## Maven Repositories
 
-Snapshots: [https://oss.sonatype.org/content/repositories/snapshots](https://oss.sonatype.org/content/repositories/snapshots)
+Snapshots: [https://oss.sonatype.org/content/repositories/snapshots](https://oss.sonatype.org/content/repositories/snapshots)\\
 Releases: [https://oss.sonatype.org/content/groups/public](https://oss.sonatype.org/content/groups/public)
 
 ## Dependency
