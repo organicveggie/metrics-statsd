@@ -8,6 +8,24 @@ As part of getting _metrics-statsd_ ready for publishing to Maven Central, the M
 
 Versions 2.1.3.0 and earlier directly matched the versioning of official releases of [codahale/metrics](https://github.com/codahale/metrics). Future versions, starting with 2.2.0, will no longer match.
 
+# Setting Up Maven
+## Maven Repositories
+
+Snapshots: [https://oss.sonatype.org/content/repositories/snapshots](https://oss.sonatype.org/content/repositories/snapshots)
+Releases: [https://oss.sonatype.org/content/groups/public](https://oss.sonatype.org/content/groups/public)
+
+## Dependency
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.bealetech</groupId>
+        <artifactId>metrics-statsd</artifactId>
+        <version>${metrics-statsd.version}</version>
+    </dependency>
+</dependencies>
+```
+
 # Compatability with metrics
 
 <table>
@@ -28,6 +46,6 @@ Versions 2.1.3.0 and earlier directly matched the versioning of official release
 
 # License
 
-Copyright (c) 2012 Sean Laurent
+Copyright (c) 2012-2013 Sean Laurent
 
 Published under Apache Software License 2.0, see LICENSE
