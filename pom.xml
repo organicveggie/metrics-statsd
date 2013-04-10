@@ -7,6 +7,7 @@
     <name>Metrics Statsd Support</name>
     <version>2.2.1-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <url>http://github.com/organicveggie/metrics-statsd/</url>
 
     <properties>
         <metrics.version>2.1.3</metrics.version>
