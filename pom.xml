@@ -8,6 +8,7 @@
     <version>2.2.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>http://github.com/organicveggie/metrics-statsd/</url>
+    <description>Statsd reporter for codahale/metrics.</description>
 
     <properties>
         <metrics.version>2.1.3</metrics.version>
