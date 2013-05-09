@@ -7,7 +7,7 @@ Statsd reporter for codahale/metrics.
 ```java
 MetricsRegistry registry = new MetricsRegistry();
 StatsdReporter reporter = new StatsdReporter(registry, "statsd.example.com", 8125);
-reporter.start();
+reporter.start(15, TimeUnit.SECONDS);
 ```
 
 ## Important Notes
