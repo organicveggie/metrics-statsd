@@ -79,7 +79,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm) throws IOException {
-        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, "graphite-reporter");
+        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, "statsd-reporter");
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm, String name) throws IOException {
@@ -130,9 +130,9 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             socket.send(packet);
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Error writing to Graphite", e);
+                LOG.debug("Error writing to StatsD", e);
             } else {
-                LOG.warn("Error writing to Graphite: {}", e.getMessage());
+                LOG.warn("Error writing to StatsD: {}", e.getMessage());
             }
             if (writer != null) {
                 try {
@@ -322,7 +322,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             prependNewline = true;
             writer.flush();
         } catch (IOException e) {
-            LOG.error("Error sending to Graphite:", e);
+            LOG.error("Error sending to StatsD:", e);
         }
     }
 
