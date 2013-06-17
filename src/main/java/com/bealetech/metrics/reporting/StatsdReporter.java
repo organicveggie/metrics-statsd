@@ -48,6 +48,9 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     private boolean prependNewline = false;
     private boolean printVMMetrics = true;
+    private boolean shouldTranslateTimersToGauges = true; // Statsd rewrites timers with more info, causing a potential explosion in
+                                             // the number of metrics being pushed from statsd to graphite if you have a
+                                             // lot of timers or histograms. See: https://github.com/etsy/statsd/blob/master/docs/metric_types.md#timing
 
     public interface UDPSocketProvider {
         DatagramSocket get() throws Exception;
@@ -106,6 +109,14 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     public void setPrintVMMetrics(boolean printVMMetrics) {
         this.printVMMetrics = printVMMetrics;
+    }
+
+    public boolean isShouldTranslateTimersToGauges() {
+        return shouldTranslateTimersToGauges;
+    }
+
+    public void setShouldTranslateTimersToGauges(boolean shouldTranslateTimersToGauges) {
+        this.shouldTranslateTimersToGauges = shouldTranslateTimersToGauges;
     }
 
     @Override
@@ -303,7 +314,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 statTypeStr = "g";
                 break;
             case TIMER:
-                statTypeStr = "ms";
+                statTypeStr = shouldTranslateTimersToGauges ? "g" : "ms";
                 break;
         }
 
