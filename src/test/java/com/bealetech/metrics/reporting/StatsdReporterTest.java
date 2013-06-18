@@ -16,7 +16,6 @@
 package com.bealetech.metrics.reporting;
 
 import com.yammer.metrics.core.*;
-import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.stats.Snapshot;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +38,7 @@ import static org.mockito.Mockito.*;
 public class StatsdReporterTest {
 
     protected final Clock clock = mock(Clock.class);
-    protected AbstractPollingReporter reporter;
+    protected StatsdReporter reporter;
     protected TestMetricsRegistry registry;
     protected DatagramPacket packet;
 
@@ -59,7 +58,7 @@ public class StatsdReporterTest {
         reporter = createReporter(registry, clock);
     }
 
-    protected AbstractPollingReporter createReporter(MetricsRegistry registry, Clock clock) throws Exception {
+    protected StatsdReporter createReporter(MetricsRegistry registry, Clock clock) throws Exception {
         final DatagramSocket socket = mock(DatagramSocket.class);
         final StatsdReporter.UDPSocketProvider provider = mock(StatsdReporter.UDPSocketProvider.class);
         when(provider.get()).thenReturn(socket);
@@ -75,12 +74,22 @@ public class StatsdReporterTest {
     }
 
     protected <T extends Metric> void assertReporterOutput(Callable<T> action, String... expected) throws Exception {
+        assertReporterOutput(action, false, expected);
+    }
+
+    protected <T extends Metric> void assertReporterOutput(Callable<T> action, boolean shouldTranslateTimersToGauges, String... expected) throws Exception {
         // Invoke the callable to trigger (ie, mark()/inc()/etc) and return the metric
         final T metric = action.call();
         try {
             // Add the metric to the registry, run the reporter and flush the result
             registry.add(new MetricName(Object.class, "metric"), metric);
-            reporter.run();
+            boolean oldTimerTranslationConfig = reporter.isShouldTranslateTimersToGauges();
+            try {
+                reporter.setShouldTranslateTimersToGauges(shouldTranslateTimersToGauges);
+                reporter.run();
+            } finally {
+                reporter.setShouldTranslateTimersToGauges(oldTimerTranslationConfig);
+            }
 
             String packetData = new String(packet.getData());
             final String[] lines = packetData.split("\r?\n|\r");
@@ -122,6 +131,26 @@ public class StatsdReporterTest {
                 "prefix.java.lang.Object.metric.98percentile:0.98|ms",
                 "prefix.java.lang.Object.metric.99percentile:0.99|ms",
                 "prefix.java.lang.Object.metric.999percentile:1.00|ms"
+        };
+    }
+
+    public String[] expectedTranslatedTimerResult() {
+        return new String[]{
+                "prefix.java.lang.Object.metric.count:1|g",
+                "prefix.java.lang.Object.metric.meanRate:2.00|g",
+                "prefix.java.lang.Object.metric.1MinuteRate:1.00|g",
+                "prefix.java.lang.Object.metric.5MinuteRate:5.00|g",
+                "prefix.java.lang.Object.metric.15MinuteRate:15.00|g",
+                "prefix.java.lang.Object.metric.min:1.00|g",
+                "prefix.java.lang.Object.metric.max:3.00|g",
+                "prefix.java.lang.Object.metric.mean:2.00|g",
+                "prefix.java.lang.Object.metric.stddev:1.50|g",
+                "prefix.java.lang.Object.metric.median:0.50|g",
+                "prefix.java.lang.Object.metric.75percentile:0.75|g",
+                "prefix.java.lang.Object.metric.95percentile:0.95|g",
+                "prefix.java.lang.Object.metric.98percentile:0.98|g",
+                "prefix.java.lang.Object.metric.99percentile:0.99|g",
+                "prefix.java.lang.Object.metric.999percentile:1.00|g"
         };
     }
 
@@ -216,6 +245,19 @@ public class StatsdReporterTest {
                     }
                 },
                 expectedGaugeResult(value));
+    }
+
+    @Test
+    public final void timerWithTranslatedOutput() throws Exception {
+        assertReporterOutput(
+                new Callable<Timer>() {
+                    @Override
+                    public Timer call() throws Exception {
+                        return createTimer();
+                    }
+                },
+                true,
+                expectedTranslatedTimerResult());
     }
 
     static Counter createCounter(long count) throws Exception {
