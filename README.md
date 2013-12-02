@@ -1,6 +1,27 @@
 # metrics-statsd
 
-Statsd reporter for codahale/metrics.
+Statsd reporter for [codahale/metrics] (https://github.com/codahale/metrics).
+
+## Quick Start
+
+The 3.x version of the Metrics library now uses the builder pattern to construct reporters. Below is an example of how to
+create a StatsdReporter and report out metrics every 15 seconds.
+
+ ```java
+ final Statsd statsd = new Statsd("localhost", port);
+
+ StatsdReporter reporter StatsdReporter.forRegistry(registry)
+         .prefixedWith("foo")
+         .convertDurationsTo(TimeUnit.MILLISECONDS)
+         .convertRatesTo(TimeUnit.SECONDS)
+         .filter(MetricFilter.ALL)
+         .build(statsd);
+reporter.start(15, TimeUnit.SECONDS);
+```
+
+If you are using Dropwizard (0.7.x +), there is an easy way to configure a Metrics reporter to be used directly from your
+YAML configuration file. See (https://github.com/dropwizard/dropwizard/tree/master/dropwizard-metrics-graphite) for an
+example of how to create a ReporterFactory.
 
 ## Important Notes
 
