@@ -38,6 +38,10 @@ Releases: [https://oss.sonatype.org/content/groups/public](https://oss.sonatype.
     <td><strong>metrics version</strong></td> 
   </tr>
   <tr>
+    <td>3.0.x</td>
+    <td>3.0.1</td>
+  </tr>
+  <tr>
   	<td>2.3.x</td>
   	<td>2.1.x</td>
   </tr>  
