@@ -23,7 +23,6 @@ public class Statsd implements Closeable {
 
     private final String host;
     private final int port;
-    private String prefix = "";
 
     private boolean prependNewline = false;
 
@@ -32,17 +31,8 @@ public class Statsd implements Closeable {
     private Writer writer;
 
     public Statsd(String host, int port) {
-        this(host, port, null);
-    }
-
-    public Statsd(String host, int port, String prefix) {
         this.host = host;
         this.port = port;
-
-        if (prefix != null) {
-            // Pre-append the "." so that we don't need to make anything conditional later.
-            this.prefix = prefix + ".";
-        }
 
         outputData = new ByteArrayOutputStream();
     }
@@ -77,9 +67,6 @@ public class Statsd implements Closeable {
         try {
             if (prependNewline) {
                 writer.write("\n");
-            }
-            if (!prefix.isEmpty()) {
-                writer.write(prefix);
             }
             writer.write(sanitizeString(name));
             writer.write(":");
