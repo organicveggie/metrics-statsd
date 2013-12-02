@@ -76,7 +76,7 @@ public class Statsd implements Closeable {
             prependNewline = true;
             writer.flush();
         } catch (IOException e) {
-            logger.error("Error sending to Graphite:", e);
+            logger.error("Error sending to Statsd:", e);
         }
     }
 
