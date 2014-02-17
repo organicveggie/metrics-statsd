@@ -2,7 +2,7 @@
 
 Statsd reporter for [codahale/metrics] (https://github.com/codahale/metrics), based on Sean Laurent's [metrics-statsd] (https://github.com/organicveggie/metrics-statsd) and Mike Keesey's [metrics-statsd] (https://github.com/ReadyTalk/metrics-statsd), with added support for metric tags on the reporter level.
 
-Only versopm 3.x of the Metrics library is supported.
+Only version 3.x of the Metrics library is supported.
 
 ## Quick Start
 
