@@ -13,9 +13,9 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.bakersoft.metrics.reporting;
+package com.github.jjagged.metrics.reporting;
 
-import com.bakersoft.metrics.reporting.statsd.StatsD;
+import com.github.jjagged.metrics.reporting.statsd.StatsD;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;

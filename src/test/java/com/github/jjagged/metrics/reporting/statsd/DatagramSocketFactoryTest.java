@@ -13,20 +13,29 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.bakersoft.metrics.reporting.statsd;
+package com.github.jjagged.metrics.reporting.statsd;
+
+import org.junit.Test;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 
-public class DatagramSocketFactory {
-    public DatagramSocket createSocket() throws SocketException {
-        return new DatagramSocket();
+import static org.junit.Assert.assertNotNull;
+
+public class DatagramSocketFactoryTest {
+    @Test
+    public void createDatagramSocket() throws SocketException {
+        DatagramSocket socket = new DatagramSocketFactory().createSocket();
+        assertNotNull(socket);
     }
 
-    public DatagramPacket createPacket(final byte[] bytes, final int length,
-            final InetSocketAddress address) throws SocketException {
-        return new DatagramPacket(bytes, length, address);
+    @Test
+    public void createDatagramPacket() throws SocketException {
+        InetSocketAddress address = new InetSocketAddress("example.com", 9876);
+        DatagramPacket packet = new DatagramSocketFactory().createPacket(
+                "yellow dellow".getBytes(), "yellow dellow".length(), address);
+        assertNotNull(packet);
     }
 }

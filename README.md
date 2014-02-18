@@ -32,7 +32,7 @@ Not in a repository yet, working on that.
 ```xml
 <dependencies>
     <dependency>
-        <groupId>com.bakersoft</groupId>
+        <groupId>com.github.jjagged</groupId>
         <artifactId>metrics-statsd</artifactId>
         <version>${metrics-statsd.version}</version>
     </dependency>
