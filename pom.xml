@@ -11,7 +11,7 @@
     <groupId>com.github.jjagged</groupId>
     <artifactId>metrics-statsd</artifactId>
     <name>Metrics Statsd Support</name>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>http://github.com/jjagged/metrics-statsd/</url>
     <description>Statsd reporter for codahale/metrics with support for tags.</description>
@@ -52,7 +52,7 @@
         <connection>scm:git:ssh://github.com/jjagged/metrics-statsd.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jjagged/metrics-statsd.git</developerConnection>
         <url>https://github.com/jjagged/metrics-statsd</url>
-      <tag>v1.0.0</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <issueManagement>
