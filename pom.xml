@@ -51,12 +51,12 @@
     <scm>
         <connection>scm:git:git://github.com/jjagged/metrics-statsd.git</connection>
         <developerConnection>scm:git:git@github.com:jjagged/metrics-statsd.git</developerConnection>
-        <url>https://github.com/jjagged/metrics-statsd/</url>
+        <url>https://github.com/jjagged/metrics-statsd</url>
     </scm>
 
     <issueManagement>
         <system>github</system>
-        <url>http://github.com/jjagged/metrics-statsd/issues#issue/</url>
+        <url>https://github.com/jjagged/metrics-statsd/issues#issue/</url>
     </issueManagement>
 
     <distributionManagement>
