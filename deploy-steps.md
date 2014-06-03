@@ -2,16 +2,16 @@
 
 ## Snapshots
 
-```ruby
-mvn clean deploy
+```bash
+$ mvn clean deploy
 ```
 
 ## Staging
 
-```ruby
-mvn release:clean
-mvn release:prepare
-mvn release:perform
+```bash
+$ mvn release:clean
+$ mvn release:prepare
+$ mvn release:perform
 ```
 
 ## Releasing
