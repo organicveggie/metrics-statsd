@@ -54,6 +54,8 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     public static enum StatType { COUNTER, TIMER, GAUGE }
 
     private static final Logger LOG = LoggerFactory.getLogger(StatsdReporter.class);
+    
+    private static final int DEFAULT_MAX_UDP_PACKET_SIZE = 1500;
 
     private final String prefix;
     private final MetricPredicate predicate;
@@ -63,6 +65,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     private final VirtualMachineMetrics vm;
     private Writer writer;
     private ByteArrayOutputStream outputData;
+    private int udpPacketMaxSize;
 
     private boolean prependNewline = false;
     private boolean printVMMetrics = true;
@@ -101,10 +104,15 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm, String name) throws IOException {
+        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, name, DEFAULT_MAX_UDP_PACKET_SIZE);
+    }
+
+    public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm, String name, int udpPacketMaxSize) throws IOException {
         super(metricsRegistry, name);
 
         this.socketProvider = socketProvider;
         this.vm = vm;
+        this.udpPacketMaxSize = udpPacketMaxSize;
 
         this.clock = clock;
 
