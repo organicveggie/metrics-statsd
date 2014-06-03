@@ -289,7 +289,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         return sb.append(name.getName()).toString();
     }
 
-    private String sanitizeString(String s) {
+    private static String sanitizeString(String s) {
         return s.replace(' ', '-');
     }
 
