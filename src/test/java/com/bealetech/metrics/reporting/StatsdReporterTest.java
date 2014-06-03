@@ -61,6 +61,7 @@ public class StatsdReporterTest {
     private AbstractPollingReporter reporter;
     private TestMetricsRegistry registry;
     private DatagramPacket packet;
+    private DatagramPacket secondPacket;
     private DatagramSocket mockedSocket;
 
     private static class TestMetricsRegistry extends MetricsRegistry {
@@ -74,8 +75,12 @@ public class StatsdReporterTest {
         when(clock.tick()).thenReturn(1234L);
         when(clock.time()).thenReturn(5678L);
         registry = new TestMetricsRegistry();
+        
         byte[] data = new byte[65536];
         packet = new DatagramPacket(data, data.length);
+
+        byte[] secondData = new byte[65536];
+        secondPacket = new DatagramPacket(secondData, secondData.length);
         reporter = createReporter(registry, clock);
     }
 
@@ -83,7 +88,7 @@ public class StatsdReporterTest {
         mockedSocket = mock(DatagramSocket.class);
         final StatsdReporter.UDPSocketProvider provider = mock(StatsdReporter.UDPSocketProvider.class);
         when(provider.get()).thenReturn(mockedSocket);
-        when(provider.newPacket(any(ByteArrayOutputStream.class))).thenReturn(packet);
+        when(provider.newPacket(any(ByteArrayOutputStream.class))).thenReturn(packet).thenReturn(secondPacket);
 
         final StatsdReporter reporter = new StatsdReporter(registry,
                                                            "prefix",
@@ -94,17 +99,25 @@ public class StatsdReporterTest {
         return reporter;
     }
 
-    private <T extends Metric> void assertReporterOutput(Callable<T> action, String... expected) throws Exception {
+    private <T extends Metric> void assertReporterOutput(Callable<T> action, String[][] expected) throws Exception {
         // Invoke the callable to trigger (ie, mark()/inc()/etc) and return the metric
         final T metric = action.call();
+        Assert.assertTrue(expected.length > 0);
         try {
             // Add the metric to the registry, run the reporter and flush the result
             registry.add(new MetricName(Object.class, "metric"), metric);
             reporter.run();
 
             String packetData = new String(packet.getData());
-            final String[] lines = packetData.split("\r?\n|\r");
-            assertArraysTrimmedEquals(expected, lines);
+            String[] lines = packetData.split("\r?\n|\r");
+            assertArraysTrimmedEquals(expected[0], lines);
+            if (expected.length > 1) {
+                packetData = new String(secondPacket.getData());
+                lines = packetData.split("\r?\n|\r");
+                assertArraysTrimmedEquals(expected[1], lines);
+            }
+            
+            Assert.assertFalse("Test don't currently handle more than two generated packets. Should probably use a loop instead.", expected.length > 2);
         } finally {
             reporter.shutdown();
         }
@@ -126,58 +139,70 @@ public class StatsdReporterTest {
         }
     }
 
-    public String[] expectedGaugeResult(String value) {
-        return new String[]{String.format("prefix.java.lang.Object.metric.count:%s|g", value)};
-    }
-
-    public String[] expectedTimerResult() {
-        return new String[]{
-                "prefix.java.lang.Object.metric.count:1|g",
-                "prefix.java.lang.Object.metric.meanRate:2.00|ms",
-                "prefix.java.lang.Object.metric.1MinuteRate:1.00|ms",
-                "prefix.java.lang.Object.metric.5MinuteRate:5.00|ms",
-                "prefix.java.lang.Object.metric.15MinuteRate:15.00|ms",
-                "prefix.java.lang.Object.metric.min:1.00|ms",
-                "prefix.java.lang.Object.metric.max:3.00|ms",
-                "prefix.java.lang.Object.metric.mean:2.00|ms",
-                "prefix.java.lang.Object.metric.stddev:1.50|ms",
-                "prefix.java.lang.Object.metric.median:0.50|ms",
-                "prefix.java.lang.Object.metric.75percentile:0.75|ms",
-                "prefix.java.lang.Object.metric.95percentile:0.95|ms",
-                "prefix.java.lang.Object.metric.98percentile:0.98|ms",
-                "prefix.java.lang.Object.metric.99percentile:0.99|ms",
-                "prefix.java.lang.Object.metric.999percentile:1.00|ms"
+    public String[][] expectedGaugeResult(String value) {
+        return new String[][] {
+            new String[] {
+                String.format("prefix.java.lang.Object.metric.count:%s|g", value)
+            }
         };
     }
 
-    public String[] expectedMeterResult() {
-        return new String[]{
-                "prefix.java.lang.Object.metric.count:1|g",
-                "prefix.java.lang.Object.metric.meanRate:2.00|ms",
-                "prefix.java.lang.Object.metric.1MinuteRate:1.00|ms",
-                "prefix.java.lang.Object.metric.5MinuteRate:5.00|ms",
-                "prefix.java.lang.Object.metric.15MinuteRate:15.00|ms",
+    public String[][] expectedTimerResult() {
+        return new String[][] {
+            new String[] {
+                    "prefix.java.lang.Object.metric.count:1|g",
+                    "prefix.java.lang.Object.metric.meanRate:2.00|ms",
+                    "prefix.java.lang.Object.metric.1MinuteRate:1.00|ms",
+                    "prefix.java.lang.Object.metric.5MinuteRate:5.00|ms",
+                    "prefix.java.lang.Object.metric.15MinuteRate:15.00|ms",
+                    "prefix.java.lang.Object.metric.min:1.00|ms",
+                    "prefix.java.lang.Object.metric.max:3.00|ms",
+                    "prefix.java.lang.Object.metric.mean:2.00|ms",
+                    "prefix.java.lang.Object.metric.stddev:1.50|ms",
+                    "prefix.java.lang.Object.metric.median:0.50|ms",
+                    "prefix.java.lang.Object.metric.75percentile:0.75|ms",
+                    "prefix.java.lang.Object.metric.95percentile:0.95|ms",
+                    "prefix.java.lang.Object.metric.98percentile:0.98|ms",
+                    "prefix.java.lang.Object.metric.99percentile:0.99|ms",
+                    "prefix.java.lang.Object.metric.999percentile:1.00|ms"
+            }
         };
     }
 
-    public String[] expectedHistogramResult() {
-        return new String[]{
-                "prefix.java.lang.Object.metric.min:1.00|ms",
-                "prefix.java.lang.Object.metric.max:3.00|ms",
-                "prefix.java.lang.Object.metric.mean:2.00|ms",
-                "prefix.java.lang.Object.metric.stddev:1.50|ms",
-                "prefix.java.lang.Object.metric.median:0.50|ms",
-                "prefix.java.lang.Object.metric.75percentile:0.75|ms",
-                "prefix.java.lang.Object.metric.95percentile:0.95|ms",
-                "prefix.java.lang.Object.metric.98percentile:0.98|ms",
-                "prefix.java.lang.Object.metric.99percentile:0.99|ms",
-                "prefix.java.lang.Object.metric.999percentile:1.00|ms"
+    public String[][] expectedMeterResult() {
+        return new String[][] {
+            new String[] {
+                    "prefix.java.lang.Object.metric.count:1|g",
+                    "prefix.java.lang.Object.metric.meanRate:2.00|ms",
+                    "prefix.java.lang.Object.metric.1MinuteRate:1.00|ms",
+                    "prefix.java.lang.Object.metric.5MinuteRate:5.00|ms",
+                    "prefix.java.lang.Object.metric.15MinuteRate:15.00|ms",
+            }
         };
     }
 
-    public String[] expectedCounterResult(long count) {
-        return new String[]{
+    public String[][] expectedHistogramResult() {
+        return new String[][] {
+            new String[] {
+                    "prefix.java.lang.Object.metric.min:1.00|ms",
+                    "prefix.java.lang.Object.metric.max:3.00|ms",
+                    "prefix.java.lang.Object.metric.mean:2.00|ms",
+                    "prefix.java.lang.Object.metric.stddev:1.50|ms",
+                    "prefix.java.lang.Object.metric.median:0.50|ms",
+                    "prefix.java.lang.Object.metric.75percentile:0.75|ms",
+                    "prefix.java.lang.Object.metric.95percentile:0.95|ms",
+                    "prefix.java.lang.Object.metric.98percentile:0.98|ms",
+                    "prefix.java.lang.Object.metric.99percentile:0.99|ms",
+                    "prefix.java.lang.Object.metric.999percentile:1.00|ms"
+            }
+        };
+    }
+
+    public String[][] expectedCounterResult(long count) {
+        return new String[][] {
+            new String[] {
                 String.format("prefix.java.lang.Object.metric.count:%d|g", count)
+            }
         };
     }
 
