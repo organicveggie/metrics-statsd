@@ -4,8 +4,9 @@ Statsd reporter for [codahale/metrics] (https://github.com/codahale/metrics).
 
 ## Quick Start
 
-The 3.x version of the Metrics library now uses the builder pattern to construct reporters. Below is an example of how to
-create a StatsdReporter and report out metrics every 15 seconds.
+The 3.x version of the Metrics library now uses the builder pattern to
+construct reporters. Below is an example of how to create a StatsdReporter and
+report out metrics every 15 seconds.
 
  ```java
  final Statsd statsd = new Statsd("localhost", port);
@@ -19,19 +20,24 @@ create a StatsdReporter and report out metrics every 15 seconds.
 reporter.start(15, TimeUnit.SECONDS);
 ```
 
-If you are using Dropwizard (0.7.x +), there is an easy way to configure a Metrics reporter to be used directly from your
-YAML configuration file. See (https://github.com/dropwizard/dropwizard/tree/master/dropwizard-metrics-graphite) for an
-example of how to create a ReporterFactory.
+If you are using Dropwizard (0.7.x +), there is an easy way to configure a
+Metrics reporter to be used directly from your YAML configuration file. See
+(https://github.com/dropwizard/dropwizard/tree/master/dropwizard-metrics-graphite)
+for an example of how to create a ReporterFactory.
 
 ## Important Notes
 
 ### Package Name & GroupId
 
-As part of getting _metrics-statsd_ ready for publishing to Maven Central, the Maven _groupId_ changed from `studyblue` to `com.bealetech`. In addition, as of v2.3.0, the package name changed from `com.studyblue` to `com.bealetech`.
+As part of getting _metrics-statsd_ ready for publishing to Maven Central, the
+Maven _groupId_ changed from `studyblue` to `com.bealetech`. In addition, as of
+v2.3.0, the package name changed from `com.studyblue` to `com.bealetech`.
 
 ### Version Numbers
 
-Versions 2.1.3.0 and earlier directly matched the versioning of official releases of [codahale/metrics](https://github.com/codahale/metrics). Future versions, starting with 2.2.0, will no longer match.
+Versions 2.1.3.0 and earlier directly matched the versioning of official
+releases of [codahale/metrics](https://github.com/codahale/metrics). Future
+versions, starting with 2.2.0, will no longer match.
 
 # Setting Up Maven
 ## Maven Repositories
