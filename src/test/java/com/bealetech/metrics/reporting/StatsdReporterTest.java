@@ -218,7 +218,7 @@ public class StatsdReporterTest {
                 expectedGaugeResult(value));
     }
 
-    static Counter createCounter(long count) throws Exception {
+    private static Counter createCounter(long count) throws Exception {
         final Counter mock = mock(Counter.class);
         when(mock.count()).thenReturn(count);
         return configureMatcher(mock, doAnswer(new MetricsProcessorAction() {
@@ -229,7 +229,7 @@ public class StatsdReporterTest {
         }));
     }
 
-    static Histogram createHistogram() throws Exception {
+    private static Histogram createHistogram() throws Exception {
         final Histogram mock = mock(Histogram.class);
         setupSummarizableMock(mock);
         setupSamplingMock(mock);
@@ -242,7 +242,7 @@ public class StatsdReporterTest {
     }
 
 
-    static Gauge<String> createGauge() throws Exception {
+    private static Gauge<String> createGauge() throws Exception {
         @SuppressWarnings("unchecked")
         final Gauge<String> mock = mock(Gauge.class);
         when(mock.value()).thenReturn("gaugeValue");
@@ -255,7 +255,7 @@ public class StatsdReporterTest {
     }
 
 
-    static Timer createTimer() throws Exception {
+    private static Timer createTimer() throws Exception {
         final Timer mock = mock(Timer.class);
         when(mock.durationUnit()).thenReturn(TimeUnit.MILLISECONDS);
         setupSummarizableMock(mock);
@@ -269,7 +269,7 @@ public class StatsdReporterTest {
         }));
     }
 
-    static Meter createMeter() throws Exception {
+    private static Meter createMeter() throws Exception {
         final Meter mock = mock(Meter.class);
         setupMeteredMock(mock);
         return configureMatcher(mock, doAnswer(new MetricsProcessorAction() {
@@ -281,12 +281,12 @@ public class StatsdReporterTest {
     }
 
     @SuppressWarnings("unchecked")
-    static <T extends Metric> T configureMatcher(T mock, Stubber stub) throws Exception {
+    private static <T extends Metric> T configureMatcher(T mock, Stubber stub) throws Exception {
         stub.when(mock).processWith(any(MetricProcessor.class), any(MetricName.class), any());
         return mock;
     }
 
-    static abstract class MetricsProcessorAction implements Answer<Object> {
+    private static abstract class MetricsProcessorAction implements Answer<Object> {
         @Override
         public Object answer(InvocationOnMock invocation) throws Throwable {
             @SuppressWarnings("unchecked")
@@ -300,14 +300,14 @@ public class StatsdReporterTest {
         abstract void delegateToProcessor(MetricProcessor<Object> processor, MetricName name, Object context) throws Exception;
     }
 
-    static void setupSummarizableMock(Summarizable summarizable) {
+    private static void setupSummarizableMock(Summarizable summarizable) {
         when(summarizable.min()).thenReturn(1d);
         when(summarizable.max()).thenReturn(3d);
         when(summarizable.mean()).thenReturn(2d);
         when(summarizable.stdDev()).thenReturn(1.5d);
     }
 
-    static void setupMeteredMock(Metered metered) {
+    private static void setupMeteredMock(Metered metered) {
         when(metered.count()).thenReturn(1L);
         when(metered.oneMinuteRate()).thenReturn(1d);
         when(metered.fiveMinuteRate()).thenReturn(5d);
@@ -317,7 +317,7 @@ public class StatsdReporterTest {
         when(metered.rateUnit()).thenReturn(TimeUnit.SECONDS);
     }
 
-    static void setupSamplingMock(Sampling sampling) {
+    private static void setupSamplingMock(Sampling sampling) {
         final double[] values = new double[1000];
         for (int i = 0; i < values.length; i++) {
             values[i] = i / 1000.0;
