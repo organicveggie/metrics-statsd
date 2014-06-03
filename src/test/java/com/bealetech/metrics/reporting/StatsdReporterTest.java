@@ -15,14 +15,12 @@
  */
 package com.bealetech.metrics.reporting;
 
-import com.yammer.metrics.core.*;
-import com.yammer.metrics.reporting.AbstractPollingReporter;
-import com.yammer.metrics.stats.Snapshot;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.Stubber;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.net.DatagramPacket;
@@ -32,9 +30,30 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import junit.framework.Assert;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.Stubber;
+
+import com.yammer.metrics.core.Clock;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Metered;
+import com.yammer.metrics.core.Metric;
+import com.yammer.metrics.core.MetricName;
+import com.yammer.metrics.core.MetricPredicate;
+import com.yammer.metrics.core.MetricProcessor;
+import com.yammer.metrics.core.MetricsRegistry;
+import com.yammer.metrics.core.Sampling;
+import com.yammer.metrics.core.Summarizable;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.reporting.AbstractPollingReporter;
+import com.yammer.metrics.stats.Snapshot;
 
 public class StatsdReporterTest {
 
@@ -85,22 +104,26 @@ public class StatsdReporterTest {
 
             String packetData = new String(packet.getData());
             final String[] lines = packetData.split("\r?\n|\r");
-            // Assertions: first check that the line count matches then compare line by line ignoring leading and trailing whitespace
-            assertEquals("Line count mismatch, was:\n" + Arrays.toString(lines) + "\nexpected:\n" + Arrays
-                    .toString(expected) + "\n", expected.length,
-                    lines.length);
-            for (int i = 0; i < lines.length; i++) {
-                if (!expected[i].trim().equals(lines[i].trim())) {
-                    System.err.println("Failure comparing line " + (1 + i));
-                    System.err.println("Was:      '" + lines[i] + "'");
-                    System.err.println("Expected: '" + expected[i] + "'\n");
-                }
-                assertEquals(expected[i].trim(), lines[i].trim());
-            }
+            assertArraysTrimmedEquals(expected, lines);
         } finally {
             reporter.shutdown();
         }
         verify(mockedSocket).send(packet);
+    }
+    
+    private void assertArraysTrimmedEquals(String[] expected, String[] lines) {
+        // Assertions: first check that the line count matches then compare line by line ignoring leading and trailing whitespace
+        assertEquals("Line count mismatch, was:\n" + Arrays.toString(lines) + "\nexpected:\n" + Arrays
+                .toString(expected) + "\n", expected.length,
+                lines.length);
+        for (int i = 0; i < lines.length; i++) {
+            if (!expected[i].trim().equals(lines[i].trim())) {
+                System.err.println("Failure comparing line " + (1 + i));
+                System.err.println("Was:      '" + lines[i] + "'");
+                System.err.println("Expected: '" + expected[i] + "'\n");
+            }
+            assertEquals(expected[i].trim(), lines[i].trim());
+        }
     }
 
     public String[] expectedGaugeResult(String value) {
