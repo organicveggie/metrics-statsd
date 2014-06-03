@@ -79,7 +79,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm) throws IOException {
-        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, "graphite-reporter");
+        this(metricsRegistry, prefix, predicate, socketProvider, clock, vm, "statsd-reporter");
     }
 
     public StatsdReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, UDPSocketProvider socketProvider, Clock clock, VirtualMachineMetrics vm, String name) throws IOException {
