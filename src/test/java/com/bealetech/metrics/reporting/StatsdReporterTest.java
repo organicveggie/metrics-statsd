@@ -42,6 +42,7 @@ public class StatsdReporterTest {
     private AbstractPollingReporter reporter;
     private TestMetricsRegistry registry;
     private DatagramPacket packet;
+    private DatagramSocket mockedSocket;
 
     private static class TestMetricsRegistry extends MetricsRegistry {
         public <T extends Metric> T add(MetricName name, T metric) {
@@ -60,9 +61,9 @@ public class StatsdReporterTest {
     }
 
     private AbstractPollingReporter createReporter(MetricsRegistry registry, Clock clock) throws Exception {
-        final DatagramSocket socket = mock(DatagramSocket.class);
+        mockedSocket = mock(DatagramSocket.class);
         final StatsdReporter.UDPSocketProvider provider = mock(StatsdReporter.UDPSocketProvider.class);
-        when(provider.get()).thenReturn(socket);
+        when(provider.get()).thenReturn(mockedSocket);
         when(provider.newPacket(any(ByteArrayOutputStream.class))).thenReturn(packet);
 
         final StatsdReporter reporter = new StatsdReporter(registry,
@@ -99,6 +100,7 @@ public class StatsdReporterTest {
         } finally {
             reporter.shutdown();
         }
+        verify(mockedSocket).send(packet);
     }
 
     public String[] expectedGaugeResult(String value) {
