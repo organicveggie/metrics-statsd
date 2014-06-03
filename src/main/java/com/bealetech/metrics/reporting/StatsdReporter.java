@@ -63,7 +63,6 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     private final Clock clock;
     private final UDPSocketProvider socketProvider;
     private final VirtualMachineMetrics vm;
-    private Writer writer;
     private ByteArrayOutputStream outputData;
     private int udpPacketMaxSize;
 
@@ -141,7 +140,6 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             socket = this.socketProvider.get();
             outputData.reset();
             prependNewline = false;
-            writer = new BufferedWriter(new OutputStreamWriter(this.outputData));
 
             final long epoch = clock.time() / 1000;
             if (this.printVMMetrics) {
@@ -150,7 +148,6 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             printRegularMetrics(epoch);
 
             // Send UDP data
-            writer.flush();
             DatagramPacket packet = this.socketProvider.newPacket(outputData);
             packet.setData(outputData.toByteArray());
             socket.send(packet);
@@ -160,18 +157,10 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             } else {
                 LOG.warn("Error writing to Statsd: {}", e.getMessage());
             }
-            if (writer != null) {
-                try {
-                    writer.flush();
-                } catch (IOException e1) {
-                    LOG.error("Error while flushing writer:", e1);
-                }
-            }
         } finally {
             if (socket != null) {
                 socket.close();
             }
-            writer = null;
         }
     }
 
@@ -332,21 +321,25 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 statTypeStr = "ms";
                 break;
         }
+        
+        final StringBuffer toWrite = new StringBuffer();
+        if (prependNewline) {
+            toWrite.append("\n");
+        }
+        if (!prefix.isEmpty()) {
+            toWrite.append(prefix);
+        }
+        toWrite.append(sanitizeString(name));
+        toWrite.append(":");
+        toWrite.append(value);
+        toWrite.append("|");
+        toWrite.append(statTypeStr);
+        prependNewline = true;
+        
+        final byte[] bytesToWrite = toWrite.toString().getBytes();
 
         try {
-            if (prependNewline) {
-                writer.write("\n");
-            }
-            if (!prefix.isEmpty()) {
-                writer.write(prefix);
-            }
-            writer.write(sanitizeString(name));
-            writer.write(":");
-            writer.write(value);
-            writer.write("|");
-            writer.write(statTypeStr);
-            prependNewline = true;
-            writer.flush();
+            outputData.write(bytesToWrite);
         } catch (IOException e) {
             LOG.error("Error sending to Statsd:", e);
         }
