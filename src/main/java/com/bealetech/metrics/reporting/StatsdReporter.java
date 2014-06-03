@@ -130,9 +130,9 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             socket.send(packet);
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Error writing to Graphite", e);
+                LOG.debug("Error writing to Statsd", e);
             } else {
-                LOG.warn("Error writing to Graphite: {}", e.getMessage());
+                LOG.warn("Error writing to Statsd: {}", e.getMessage());
             }
             if (writer != null) {
                 try {
@@ -322,7 +322,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             prependNewline = true;
             writer.flush();
         } catch (IOException e) {
-            LOG.error("Error sending to Graphite:", e);
+            LOG.error("Error sending to Statsd:", e);
         }
     }
 
