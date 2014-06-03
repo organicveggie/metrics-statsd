@@ -38,12 +38,12 @@ import static org.mockito.Mockito.*;
 
 public class StatsdReporterTest {
 
-    protected final Clock clock = mock(Clock.class);
-    protected AbstractPollingReporter reporter;
-    protected TestMetricsRegistry registry;
-    protected DatagramPacket packet;
+    private final Clock clock = mock(Clock.class);
+    private AbstractPollingReporter reporter;
+    private TestMetricsRegistry registry;
+    private DatagramPacket packet;
 
-    protected static class TestMetricsRegistry extends MetricsRegistry {
+    private static class TestMetricsRegistry extends MetricsRegistry {
         public <T extends Metric> T add(MetricName name, T metric) {
             return getOrAdd(name, metric);
         }
@@ -59,7 +59,7 @@ public class StatsdReporterTest {
         reporter = createReporter(registry, clock);
     }
 
-    protected AbstractPollingReporter createReporter(MetricsRegistry registry, Clock clock) throws Exception {
+    private AbstractPollingReporter createReporter(MetricsRegistry registry, Clock clock) throws Exception {
         final DatagramSocket socket = mock(DatagramSocket.class);
         final StatsdReporter.UDPSocketProvider provider = mock(StatsdReporter.UDPSocketProvider.class);
         when(provider.get()).thenReturn(socket);
@@ -74,7 +74,7 @@ public class StatsdReporterTest {
         return reporter;
     }
 
-    protected <T extends Metric> void assertReporterOutput(Callable<T> action, String... expected) throws Exception {
+    private <T extends Metric> void assertReporterOutput(Callable<T> action, String... expected) throws Exception {
         // Invoke the callable to trigger (ie, mark()/inc()/etc) and return the metric
         final T metric = action.call();
         try {

@@ -37,14 +37,14 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     private static final Logger LOG = LoggerFactory.getLogger(StatsdReporter.class);
 
-    protected final String prefix;
-    protected final MetricPredicate predicate;
-    protected final Locale locale = Locale.US;
-    protected final Clock clock;
-    protected final UDPSocketProvider socketProvider;
-    protected final VirtualMachineMetrics vm;
-    protected Writer writer;
-    protected ByteArrayOutputStream outputData;
+    private final String prefix;
+    private final MetricPredicate predicate;
+    private final Locale locale = Locale.US;
+    private final Clock clock;
+    private final UDPSocketProvider socketProvider;
+    private final VirtualMachineMetrics vm;
+    private Writer writer;
+    private ByteArrayOutputStream outputData;
 
     private boolean prependNewline = false;
     private boolean printVMMetrics = true;
@@ -149,7 +149,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         }
     }
 
-    protected void printVmMetrics(long epoch) {
+    private void printVmMetrics(long epoch) {
         // Memory
         sendFloat("jvm.memory.totalInit", StatType.GAUGE, vm.totalInit());
         sendFloat("jvm.memory.totalUsed", StatType.GAUGE, vm.totalUsed());
@@ -196,7 +196,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         }
     }
 
-    protected void printRegularMetrics(long epoch) {
+    private void printRegularMetrics(long epoch) {
         for (Map.Entry<String,SortedMap<MetricName,Metric>> entry : getMetricsRegistry().groupedMetrics(predicate).entrySet()) {
             for (Map.Entry<MetricName, Metric> subEntry : entry.getValue().entrySet()) {
                 final Metric metric = subEntry.getValue();
@@ -246,14 +246,14 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         sendObj(sanitizeName(name) + ".count", StatType.GAUGE, gauge.value());
     }
 
-    protected void sendSummarizable(String sanitizedName, Summarizable metric) throws IOException {
+    private void sendSummarizable(String sanitizedName, Summarizable metric) throws IOException {
         sendFloat(sanitizedName + ".min", StatType.TIMER, metric.min());
         sendFloat(sanitizedName + ".max", StatType.TIMER, metric.max());
         sendFloat(sanitizedName + ".mean", StatType.TIMER, metric.mean());
         sendFloat(sanitizedName + ".stddev", StatType.TIMER, metric.stdDev());
     }
 
-    protected void sendSampling(String sanitizedName, Sampling metric) throws IOException {
+    private void sendSampling(String sanitizedName, Sampling metric) throws IOException {
         final Snapshot snapshot = metric.getSnapshot();
         sendFloat(sanitizedName + ".median", StatType.TIMER, snapshot.getMedian());
         sendFloat(sanitizedName + ".75percentile", StatType.TIMER, snapshot.get75thPercentile());
@@ -264,19 +264,19 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     }
 
 
-    protected void sendInt(String name, StatType statType, long value) {
+    private void sendInt(String name, StatType statType, long value) {
         sendData(name, String.format(locale, "%d", value), statType);
     }
 
-    protected void sendFloat(String name, StatType statType, double value) {
+    private void sendFloat(String name, StatType statType, double value) {
         sendData(name, String.format(locale, "%2.2f", value), statType);
     }
 
-    protected void sendObj(String name, StatType statType, Object value) {
+    private void sendObj(String name, StatType statType, Object value) {
         sendData(name, String.format(locale, "%s", value), statType);
     }
 
-    protected String sanitizeName(MetricName name) {
+    private String sanitizeName(MetricName name) {
         final StringBuilder sb = new StringBuilder()
                 .append(name.getGroup())
                 .append('.')
@@ -289,11 +289,11 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         return sb.append(name.getName()).toString();
     }
 
-    protected String sanitizeString(String s) {
+    private String sanitizeString(String s) {
         return s.replace(' ', '-');
     }
 
-    protected void sendData(String name, String value, StatType statType) {
+    private void sendData(String name, String value, StatType statType) {
         String statTypeStr = "";
         switch (statType) {
             case COUNTER:
