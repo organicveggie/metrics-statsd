@@ -69,6 +69,8 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     private boolean prependNewline = false;
     private boolean printVMMetrics = true;
 
+    private DatagramSocket socket;
+
     public interface UDPSocketProvider {
         DatagramSocket get() throws Exception;
         DatagramPacket newPacket(ByteArrayOutputStream out);
@@ -135,11 +137,8 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     @Override
     public void run() {
-        DatagramSocket socket = null;
         try {
             socket = this.socketProvider.get();
-            outputData.reset();
-            prependNewline = false;
 
             final long epoch = clock.time() / 1000;
             if (this.printVMMetrics) {
@@ -147,10 +146,7 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             }
             printRegularMetrics(epoch);
 
-            // Send UDP data
-            DatagramPacket packet = this.socketProvider.newPacket(outputData);
-            packet.setData(outputData.toByteArray());
-            socket.send(packet);
+            sendUDPData();
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Error writing to Statsd", e);
@@ -162,6 +158,18 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 socket.close();
             }
         }
+        socket = null;
+    }
+
+    private void sendUDPData() throws IOException {
+        // Send UDP data
+        outputData.flush();
+        DatagramPacket packet = this.socketProvider.newPacket(outputData);
+        packet.setData(outputData.toByteArray());
+        socket.send(packet);
+
+        outputData.reset();
+        prependNewline = false;
     }
 
     private void printVmMetrics(long epoch) {
@@ -337,8 +345,11 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         prependNewline = true;
         
         final byte[] bytesToWrite = toWrite.toString().getBytes();
-
+        
         try {
+            if (outputData.size() + bytesToWrite.length > this.udpPacketMaxSize) {
+                sendUDPData();
+            }
             outputData.write(bytesToWrite);
         } catch (IOException e) {
             LOG.error("Error sending to Statsd:", e);
