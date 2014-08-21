@@ -25,10 +25,13 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
  * A client to a StatsD server.
+ * Note that the current version (1d9d9bf32aa5c7fe4f48d61165bed805cc8f3480) of etsy/statsd does not do anything with
+ * tags; this code still accepts and sends them.
  */
 @NotThreadSafe
 public class StatsD implements Closeable {
@@ -94,19 +97,9 @@ public class StatsD implements Closeable {
         this.socket = socketFactory.createSocket();
     }
 
-    /**
-     * Sends the given measurement to the server. Logs exceptions.
-     * 
-     * @param name
-     *            the name of the metric
-     * @param value
-     *            the value of the metric
-     */
-    public void send(final String name, final String value, @Nullable final String[] tags) {
-
+    private void sendBytes(String data) {
         try {
-            String formatted = String.format("%s:%s|g%s", sanitize(name), sanitize(value), buildTags(tags));
-            byte[] bytes = formatted.getBytes(UTF_8);
+            byte[] bytes = data.getBytes(UTF_8);
             socket.send(socketFactory.createPacket(bytes, bytes.length, address));
             failures = 0;
         } catch (IOException e) {
@@ -114,12 +107,54 @@ public class StatsD implements Closeable {
 
             if (failures == 1) {
                 LOG.warn("unable to send packet to statsd at '{}:{}'",
-                         address.getHostName(), address.getPort());
+                        address.getHostName(), address.getPort());
             } else {
                 LOG.debug("unable to send packet to statsd at '{}:{}'",
-                          address.getHostName(), address.getPort());
+                        address.getHostName(), address.getPort());
             }
         }
+    }
+
+    /**
+     * Sends the given measurement to the server. Logs exceptions.
+     * 
+     * @param name
+     *            the name of the metric
+     * @param value
+     *            the value of the metric
+     * @param tags
+     *            tags to add after |# ; etsy/statsd doesn't seem to support these.
+     */
+    public void sendGauge(final String name, final String value, @Nullable final String[] tags) {
+        // foo:103|g
+        String formatted = String.format("%s:%s|g%s", sanitize(name), sanitize(value), buildTags(tags));
+        sendBytes(formatted);
+    }
+
+    /**
+     * send a counter to statsd
+     * @param name the name of the metric
+     * @param value the amount to count
+     * @param sample the sample fraction (between 0 and 1, or null)
+     * @param tags the tags
+     */
+    public void sendCounter(final String name, final long value, @Nullable Float sample, @Nullable final String[] tags) {
+        // foo:1c
+        //foo:1c@0.1
+        String formatted = String.format("%s:%d|c%s%s", sanitize(name), value, buildSample(sample),
+                buildTags(tags));
+        sendBytes(formatted);
+    }
+
+    /**
+     * send a timing duration
+     * @param name the name of the metric
+     * @param value the time value in milliseconds.
+     */
+    public void sendTiming(final String name, final float value, @Nullable final String[] tags) {
+        //glork:320|ms
+        String formatted = String.format("%s:%.2f|ms%s", sanitize(name), value, buildTags(tags));
+        sendBytes(formatted);
     }
 
     /**
@@ -155,5 +190,13 @@ public class StatsD implements Closeable {
             }
         }
         return sb.toString();
+    }
+
+
+    private String buildSample(@Nullable Float sample) {
+        if (sample == null) {
+            return "";
+        }
+        return String.format("|@%.2f", sample);
     }
 }

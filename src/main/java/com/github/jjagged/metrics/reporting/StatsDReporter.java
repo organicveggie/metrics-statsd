@@ -43,6 +43,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A reporter which publishes metric values to a StatsD server.
+ * This maps timers and meters to gauges, since they have already been agggregated
+ * in metrics by the time they appear here. Counters travel to statsD as themselves.
+ * Note that the current version (1d9d9bf32aa5c7fe4f48d61165bed805cc8f3480) of etsy/statsd does not do anything with
+ * tags; this code still accepts and sends them.
  * 
  * @see <a href="https://github.com/etsy/statsd">StatsD</a>
  */
@@ -228,53 +232,52 @@ public class StatsDReporter extends ScheduledReporter {
     private void reportTimer(final String name, final Timer timer) {
         final Snapshot snapshot = timer.getSnapshot();
 
-        statsD.send(prefix(name, "max"), formatNumber(convertDuration(snapshot.getMax())), tags);
-        statsD.send(prefix(name, "mean"), formatNumber(convertDuration(snapshot.getMean())), tags);
-        statsD.send(prefix(name, "min"), formatNumber(convertDuration(snapshot.getMin())), tags);
-        statsD.send(prefix(name, "stddev"), formatNumber(convertDuration(snapshot.getStdDev())), tags);
-        statsD.send(prefix(name, "p50"), formatNumber(convertDuration(snapshot.getMedian())), tags);
-        statsD.send(prefix(name, "p75"), formatNumber(convertDuration(snapshot.get75thPercentile())), tags);
-        statsD.send(prefix(name, "p95"), formatNumber(convertDuration(snapshot.get95thPercentile())), tags);
-        statsD.send(prefix(name, "p98"), formatNumber(convertDuration(snapshot.get98thPercentile())), tags);
-        statsD.send(prefix(name, "p99"), formatNumber(convertDuration(snapshot.get99thPercentile())), tags);
-        statsD.send(prefix(name, "p999"), formatNumber(convertDuration(snapshot.get999thPercentile())), tags);
+        statsD.sendGauge(prefix(name, "max"), formatNumber(convertDuration(snapshot.getMax())), tags);
+        statsD.sendGauge(prefix(name, "mean"), formatNumber(convertDuration(snapshot.getMean())), tags);
+        statsD.sendGauge(prefix(name, "min"), formatNumber(convertDuration(snapshot.getMin())), tags);
+        statsD.sendGauge(prefix(name, "stddev"), formatNumber(convertDuration(snapshot.getStdDev())), tags);
+        statsD.sendGauge(prefix(name, "p50"), formatNumber(convertDuration(snapshot.getMedian())), tags);
+        statsD.sendGauge(prefix(name, "p75"), formatNumber(convertDuration(snapshot.get75thPercentile())), tags);
+        statsD.sendGauge(prefix(name, "p95"), formatNumber(convertDuration(snapshot.get95thPercentile())), tags);
+        statsD.sendGauge(prefix(name, "p98"), formatNumber(convertDuration(snapshot.get98thPercentile())), tags);
+        statsD.sendGauge(prefix(name, "p99"), formatNumber(convertDuration(snapshot.get99thPercentile())), tags);
+        statsD.sendGauge(prefix(name, "p999"), formatNumber(convertDuration(snapshot.get999thPercentile())), tags);
 
         reportMetered(name, timer);
     }
 
     private void reportMetered(final String name, final Metered meter) {
-        statsD.send(prefix(name, "count"), formatNumber(meter.getCount()), tags);
-        statsD.send(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())), tags);
-        statsD.send(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())), tags);
-        statsD.send(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())), tags);
-        statsD.send(prefix(name, "mean_rate"), formatNumber(convertRate(meter.getMeanRate())), tags);
+        statsD.sendGauge(prefix(name, "count"), formatNumber(meter.getCount()), tags);
+        statsD.sendGauge(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())), tags);
+        statsD.sendGauge(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())), tags);
+        statsD.sendGauge(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())), tags);
+        statsD.sendGauge(prefix(name, "mean_rate"), formatNumber(convertRate(meter.getMeanRate())), tags);
     }
 
     private void reportHistogram(final String name, final Histogram histogram) {
         final Snapshot snapshot = histogram.getSnapshot();
-        statsD.send(prefix(name, "count"), formatNumber(histogram.getCount()), tags);
-        statsD.send(prefix(name, "max"), formatNumber(snapshot.getMax()), tags);
-        statsD.send(prefix(name, "mean"), formatNumber(snapshot.getMean()), tags);
-        statsD.send(prefix(name, "min"), formatNumber(snapshot.getMin()), tags);
-        statsD.send(prefix(name, "stddev"), formatNumber(snapshot.getStdDev()), tags);
-        statsD.send(prefix(name, "p50"), formatNumber(snapshot.getMedian()), tags);
-        statsD.send(prefix(name, "p75"), formatNumber(snapshot.get75thPercentile()), tags);
-        statsD.send(prefix(name, "p95"), formatNumber(snapshot.get95thPercentile()), tags);
-        statsD.send(prefix(name, "p98"), formatNumber(snapshot.get98thPercentile()), tags);
-        statsD.send(prefix(name, "p99"), formatNumber(snapshot.get99thPercentile()), tags);
-        statsD.send(prefix(name, "p999"), formatNumber(snapshot.get999thPercentile()), tags);
+        statsD.sendGauge(prefix(name, "count"), formatNumber(histogram.getCount()), tags);
+        statsD.sendGauge(prefix(name, "max"), formatNumber(snapshot.getMax()), tags);
+        statsD.sendGauge(prefix(name, "mean"), formatNumber(snapshot.getMean()), tags);
+        statsD.sendGauge(prefix(name, "min"), formatNumber(snapshot.getMin()), tags);
+        statsD.sendGauge(prefix(name, "stddev"), formatNumber(snapshot.getStdDev()), tags);
+        statsD.sendGauge(prefix(name, "p50"), formatNumber(snapshot.getMedian()), tags);
+        statsD.sendGauge(prefix(name, "p75"), formatNumber(snapshot.get75thPercentile()), tags);
+        statsD.sendGauge(prefix(name, "p95"), formatNumber(snapshot.get95thPercentile()), tags);
+        statsD.sendGauge(prefix(name, "p98"), formatNumber(snapshot.get98thPercentile()), tags);
+        statsD.sendGauge(prefix(name, "p99"), formatNumber(snapshot.get99thPercentile()), tags);
+        statsD.sendGauge(prefix(name, "p999"), formatNumber(snapshot.get999thPercentile()), tags);
     }
 
     private void reportCounter(final String name, final Counter counter) {
-        statsD.send(prefix(name), formatNumber(counter.getCount()), tags);
+        statsD.sendCounter(prefix(name), counter.getCount(), null, tags);
     }
 
-    @SuppressWarnings("rawtypes")
     // Metrics 3.0 passes us the raw Gauge type
-    private void reportGauge(final String name, final Gauge gauge) {
+    private void reportGauge(final String name, final Gauge<?> gauge) {
         final String value = format(gauge.getValue());
         if (value != null) {
-            statsD.send(prefix(name), value, tags);
+            statsD.sendGauge(prefix(name), value, tags);
         }
     }
 

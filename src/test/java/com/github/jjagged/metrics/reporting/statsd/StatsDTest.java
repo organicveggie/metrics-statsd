@@ -80,9 +80,49 @@ public class StatsDTest {
     }
 
     @Test
+    public void testCount() throws Exception {
+        statsD.connect();
+        statsD.sendCounter("name counter", 42l, 0.10f, null);
+        assertThat(new String(bytesCaptor.getValue())).isEqualTo(
+                "name-counter:42|c|@0.10");
+    }
+
+    @Test
+    public void testCountNoSample() throws Exception {
+        statsD.connect();
+        statsD.sendCounter("name counter", 42l, null, null);
+        assertThat(new String(bytesCaptor.getValue())).isEqualTo(
+                "name-counter:42|c");
+    }
+
+    @Test
+    public void testCountTags() throws Exception {
+        statsD.connect();
+        statsD.sendCounter("name counter", 42l, 0.10f, new String[]{"tag1"});
+        assertThat(new String(bytesCaptor.getValue())).isEqualTo(
+                "name-counter:42|c|@0.10|#tag1");
+    }
+
+    @Test
+    public void testTiming() throws Exception {
+        statsD.connect();
+        statsD.sendTiming("timing", 3.2f, null);
+        assertThat(new String(bytesCaptor.getValue())).isEqualTo(
+                "timing:3.20|ms");
+    }
+
+    @Test
+    public void testTimingTags() throws Exception {
+        statsD.connect();
+        statsD.sendTiming("timing", 3.2f, new String[]{"tag1"});
+        assertThat(new String(bytesCaptor.getValue())).isEqualTo(
+                "timing:3.20|ms|#tag1");
+    }
+
+    @Test
     public void writesValuesToStatsD() throws Exception {
         statsD.connect();
-        statsD.send("name", "value", null);
+        statsD.sendGauge("name", "value", null);
 
         assertThat(new String(bytesCaptor.getValue()))
                 .isEqualTo("name:value|g");
@@ -91,7 +131,7 @@ public class StatsDTest {
     @Test
     public void sanitizesNames() throws Exception {
         statsD.connect();
-        statsD.send("name woo", "value", null);
+        statsD.sendGauge("name woo", "value", null);
 
         assertThat(new String(bytesCaptor.getValue())).isEqualTo(
                 "name-woo:value|g");
@@ -100,7 +140,7 @@ public class StatsDTest {
     @Test
     public void sanitizesValues() throws Exception {
         statsD.connect();
-        statsD.send("name", "value woo", null);
+        statsD.sendGauge("name", "value woo", null);
 
         assertThat(new String(bytesCaptor.getValue())).isEqualTo(
                 "name:value-woo|g");
@@ -109,7 +149,7 @@ public class StatsDTest {
     @Test
     public void address() throws IOException {
         statsD.connect();
-        statsD.send("name", "value", null);
+        statsD.sendGauge("name", "value", null);
 
         assertThat(addressCaptor.getValue()).isEqualTo(address);
     }
@@ -117,7 +157,7 @@ public class StatsDTest {
     @Test
     public void testTags() throws Exception {
         statsD.connect();
-        statsD.send("name", "value", new String[] {"my", "tags"});
+        statsD.sendGauge("name", "value", new String[]{"my", "tags"});
         
         assertThat(new String(bytesCaptor.getValue())).isEqualTo(
                 "name:value|g|#my,tags");
@@ -126,7 +166,7 @@ public class StatsDTest {
     @Test
     public void testEmptyTags() throws Exception {
         statsD.connect();
-        statsD.send("name", "value", new String[] {});
+        statsD.sendGauge("name", "value", new String[]{});
 
         assertThat(new String(bytesCaptor.getValue())).isEqualTo(
                 "name:value|g");
@@ -136,7 +176,7 @@ public class StatsDTest {
     public void testSendFailure() throws Exception {
         statsD.connect();
         doThrow(new IOException()).when(socket).send(any(DatagramPacket.class));
-        statsD.send("name", "value", null);
+        statsD.sendGauge("name", "value", null);
         assertThat(statsD.getFailures()).isEqualTo(1);
     }
 }

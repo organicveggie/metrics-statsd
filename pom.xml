@@ -29,7 +29,8 @@
 
         <!-- If you have multiple GnuPG signing keys on your keyring, the first one is used as the default key.
         In order to use another one, specify the desired key ID here, otherwise you may just leave the parameter
-        empty or override it via -DgpgKeyId=. It does not hurt to always specify it, though. -->
+        empty or override it via -DgpgKeyId=. It does not hurt to
+        always specify it, though. -->
         <gpgKeyId>878EF09F</gpgKeyId>
     </properties>
 
