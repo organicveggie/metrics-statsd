@@ -248,6 +248,7 @@ public class StatsDReporter extends ScheduledReporter {
 
     private void reportMetered(final String name, final Metered meter) {
         statsD.sendGauge(prefix(name, "count"), formatNumber(meter.getCount()), tags);
+        statsD.sendCounter(prefix(name, "count"), meter.getCount(), null, tags);
         statsD.sendGauge(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())), tags);
         statsD.sendGauge(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())), tags);
         statsD.sendGauge(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())), tags);
