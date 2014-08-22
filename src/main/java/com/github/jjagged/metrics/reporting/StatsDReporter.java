@@ -57,14 +57,17 @@ public class StatsDReporter extends ScheduledReporter {
     private final StatsD statsD;
     private final String prefix;
     private final String[] tags;
+    private final boolean convertToCounters;
 
     private StatsDReporter(final MetricRegistry registry, final StatsD statsD,
             final String prefix, final String[] tags, final TimeUnit rateUnit,
-            final TimeUnit durationUnit, final MetricFilter filter) {
+            final TimeUnit durationUnit, final MetricFilter filter,
+            final boolean convertToCounters) {
         super(registry, "statsd-reporter", filter, rateUnit, durationUnit);
         this.statsD = statsD;
         this.prefix = prefix;
         this.tags = tags;
+        this.convertToCounters = convertToCounters;
     }
 
     /**
@@ -91,6 +94,7 @@ public class StatsDReporter extends ScheduledReporter {
         private TimeUnit rateUnit;
         private TimeUnit durationUnit;
         private MetricFilter filter;
+        private boolean convertToCounters;
 
         private Builder(final MetricRegistry registry) {
             this.registry = registry;
@@ -120,6 +124,16 @@ public class StatsDReporter extends ScheduledReporter {
          */
         public Builder withTags(@Nullable final String... tags) {
             this.tags = tags;
+            return this;
+        }
+
+        /**
+         * Whether {@link com.codahale.metrics.Meter} and {@link com.codahale.metrics.Histogram} items are converted to statsd counters.
+         * @param convertToCounters true for the conversion, false to just generate many gauges.
+         * @return {@code this}
+         */
+        public Builder convertToCounters(boolean convertToCounters) {
+            this.convertToCounters = convertToCounters;
             return this;
         }
 
@@ -183,7 +197,7 @@ public class StatsDReporter extends ScheduledReporter {
          */
         public StatsDReporter build(final StatsD statsD) {
             return new StatsDReporter(registry, statsD, prefix, tags, rateUnit,
-                    durationUnit, filter);
+                    durationUnit, filter, convertToCounters);
         }
     }
 
@@ -247,27 +261,34 @@ public class StatsDReporter extends ScheduledReporter {
     }
 
     private void reportMetered(final String name, final Metered meter) {
-        statsD.sendGauge(prefix(name, "count"), formatNumber(meter.getCount()), tags);
-        statsD.sendCounter(prefix(name, "count"), meter.getCount(), null, tags);
-        statsD.sendGauge(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())), tags);
-        statsD.sendGauge(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())), tags);
-        statsD.sendGauge(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())), tags);
-        statsD.sendGauge(prefix(name, "mean_rate"), formatNumber(convertRate(meter.getMeanRate())), tags);
+        if (convertToCounters) {
+            statsD.sendCounter(prefix(name, "count"), meter.getCount(), null, tags);
+        } else {
+            statsD.sendGauge(prefix(name, "count"), formatNumber(meter.getCount()), tags);
+            statsD.sendGauge(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())), tags);
+            statsD.sendGauge(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())), tags);
+            statsD.sendGauge(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())), tags);
+            statsD.sendGauge(prefix(name, "mean_rate"), formatNumber(convertRate(meter.getMeanRate())), tags);
+        }
     }
 
     private void reportHistogram(final String name, final Histogram histogram) {
         final Snapshot snapshot = histogram.getSnapshot();
-        statsD.sendGauge(prefix(name, "count"), formatNumber(histogram.getCount()), tags);
-        statsD.sendGauge(prefix(name, "max"), formatNumber(snapshot.getMax()), tags);
-        statsD.sendGauge(prefix(name, "mean"), formatNumber(snapshot.getMean()), tags);
-        statsD.sendGauge(prefix(name, "min"), formatNumber(snapshot.getMin()), tags);
-        statsD.sendGauge(prefix(name, "stddev"), formatNumber(snapshot.getStdDev()), tags);
-        statsD.sendGauge(prefix(name, "p50"), formatNumber(snapshot.getMedian()), tags);
-        statsD.sendGauge(prefix(name, "p75"), formatNumber(snapshot.get75thPercentile()), tags);
-        statsD.sendGauge(prefix(name, "p95"), formatNumber(snapshot.get95thPercentile()), tags);
-        statsD.sendGauge(prefix(name, "p98"), formatNumber(snapshot.get98thPercentile()), tags);
-        statsD.sendGauge(prefix(name, "p99"), formatNumber(snapshot.get99thPercentile()), tags);
-        statsD.sendGauge(prefix(name, "p999"), formatNumber(snapshot.get999thPercentile()), tags);
+        if (convertToCounters) {
+            statsD.sendCounter(prefix(name, "count"), histogram.getCount(), null, tags);
+        } else {
+            statsD.sendGauge(prefix(name, "count"), formatNumber(histogram.getCount()), tags);
+            statsD.sendGauge(prefix(name, "max"), formatNumber(snapshot.getMax()), tags);
+            statsD.sendGauge(prefix(name, "mean"), formatNumber(snapshot.getMean()), tags);
+            statsD.sendGauge(prefix(name, "min"), formatNumber(snapshot.getMin()), tags);
+            statsD.sendGauge(prefix(name, "stddev"), formatNumber(snapshot.getStdDev()), tags);
+            statsD.sendGauge(prefix(name, "p50"), formatNumber(snapshot.getMedian()), tags);
+            statsD.sendGauge(prefix(name, "p75"), formatNumber(snapshot.get75thPercentile()), tags);
+            statsD.sendGauge(prefix(name, "p95"), formatNumber(snapshot.get95thPercentile()), tags);
+            statsD.sendGauge(prefix(name, "p98"), formatNumber(snapshot.get98thPercentile()), tags);
+            statsD.sendGauge(prefix(name, "p99"), formatNumber(snapshot.get99thPercentile()), tags);
+            statsD.sendGauge(prefix(name, "p999"), formatNumber(snapshot.get999thPercentile()), tags);
+        }
     }
 
     private void reportCounter(final String name, final Counter counter) {

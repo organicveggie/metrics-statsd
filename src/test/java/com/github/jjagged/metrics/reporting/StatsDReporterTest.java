@@ -211,6 +211,43 @@ public class StatsDReporterTest {
     }
 
     @Test
+    public void reportsHistogramsConverted() throws Exception {
+        StatsDReporter convertingReporter = StatsDReporter
+                .forRegistry(registry)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS).filter(MetricFilter.ALL)
+                .convertToCounters(true)
+                .build(statsD);
+
+        final Histogram histogram = mock(Histogram.class);
+        when(histogram.getCount()).thenReturn(1L);
+
+        final Snapshot snapshot = mock(Snapshot.class);
+        when(snapshot.getMax()).thenReturn(2L);
+        when(snapshot.getMean()).thenReturn(3.0);
+        when(snapshot.getMin()).thenReturn(4L);
+        when(snapshot.getStdDev()).thenReturn(5.0);
+        when(snapshot.getMedian()).thenReturn(6.0);
+        when(snapshot.get75thPercentile()).thenReturn(7.0);
+        when(snapshot.get95thPercentile()).thenReturn(8.0);
+        when(snapshot.get98thPercentile()).thenReturn(9.0);
+        when(snapshot.get99thPercentile()).thenReturn(10.0);
+        when(snapshot.get999thPercentile()).thenReturn(11.0);
+
+        when(histogram.getSnapshot()).thenReturn(snapshot);
+
+        convertingReporter.report(emptyGaugeMap, this.<Counter> map(),
+                this.<Histogram> map("histogram", histogram),
+                this.<Meter> map(), this.<Timer> map());
+
+        final InOrder inOrder = inOrder(statsD);
+
+        inOrder.verify(statsD).connect();
+        inOrder.verify(statsD).sendCounter("histogram.count", 1, null, null);
+        inOrder.verify(statsD).close();
+    }
+
+    @Test
     public void reportsMeters() throws Exception {
         final Meter meter = mock(Meter.class);
         when(meter.getCount()).thenReturn(1L);
@@ -230,6 +267,34 @@ public class StatsDReporterTest {
         verify(statsD).sendGauge("prefix.meter.m5_rate", "3.00", tags);
         verify(statsD).sendGauge("prefix.meter.m15_rate", "4.00", tags);
         inOrder.verify(statsD).sendGauge("prefix.meter.mean_rate", "5.00", tags);
+        inOrder.verify(statsD).close();
+
+    }
+
+    @Test
+    public void reportsMetersConverted() throws Exception {
+
+        StatsDReporter convertingReporter = StatsDReporter
+                .forRegistry(registry)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS).filter(MetricFilter.ALL)
+                .convertToCounters(true)
+                .build(statsD);
+
+        final Meter meter = mock(Meter.class);
+        when(meter.getCount()).thenReturn(1L);
+        when(meter.getOneMinuteRate()).thenReturn(2.0);
+        when(meter.getFiveMinuteRate()).thenReturn(3.0);
+        when(meter.getFifteenMinuteRate()).thenReturn(4.0);
+        when(meter.getMeanRate()).thenReturn(5.0);
+
+        convertingReporter.report(emptyGaugeMap, this.<Counter> map(),
+                this.<Histogram> map(), this.<Meter> map("meter", meter),
+                this.<Timer> map());
+
+        final InOrder inOrder = inOrder(statsD);
+        inOrder.verify(statsD).connect();
+        inOrder.verify(statsD).sendCounter("meter.count", 1, null, null);
         inOrder.verify(statsD).close();
 
     }
