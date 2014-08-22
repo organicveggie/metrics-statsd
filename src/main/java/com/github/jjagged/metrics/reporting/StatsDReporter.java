@@ -270,7 +270,7 @@ public class StatsDReporter extends ScheduledReporter {
     }
 
     private void reportCounter(final String name, final Counter counter) {
-        statsD.sendCounter(prefix(name), counter.getCount(), null, tags);
+        statsD.sendGauge(prefix(name), formatNumber(counter.getCount()), tags);
     }
 
     // Metrics 3.0 passes us the raw Gauge type

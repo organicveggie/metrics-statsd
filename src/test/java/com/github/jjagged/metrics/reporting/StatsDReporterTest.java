@@ -165,7 +165,7 @@ public class StatsDReporterTest {
 
         final InOrder inOrder = inOrder(statsD);
         inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendCounter("prefix.counter", 100, null, tags);
+        inOrder.verify(statsD).sendGauge("prefix.counter", "100", tags);
         inOrder.verify(statsD).close();
     }
 
