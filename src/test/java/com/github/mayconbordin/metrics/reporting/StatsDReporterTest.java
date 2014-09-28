@@ -13,24 +13,8 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.jjagged.metrics.reporting;
+package com.github.mayconbordin.metrics.reporting;
 
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
-import org.mockito.InOrder;
-
-import com.github.jjagged.metrics.reporting.statsd.StatsD;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -39,15 +23,26 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+import com.github.mayconbordin.metrics.reporting.statsd.StatsD;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import org.junit.Test;
+import org.mockito.InOrder;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class StatsDReporterTest {
     StatsD statsD = mock(StatsD.class);
     MetricRegistry registry = mock(MetricRegistry.class);
-    String[] tags = {"my", "tags"}; 
     StatsDReporter reporter = StatsDReporter
             .forRegistry(registry)
             .prefixedWith("prefix")
-            .withTags(tags)
             .convertRatesTo(TimeUnit.SECONDS)
             .convertDurationsTo(TimeUnit.MILLISECONDS).filter(MetricFilter.ALL)
             .build(statsD);
@@ -55,6 +50,20 @@ public class StatsDReporterTest {
     @SuppressWarnings("rawtypes")
     // Metrics library specifies the raw Gauge type unfortunately
     private final SortedMap<String, Gauge> emptyGaugeMap = new TreeMap<String, Gauge>();
+    
+    @Test
+    public void initializeStatsD() throws Exception {
+        StatsD s = mock(StatsD.class);
+        StatsDReporter r = StatsDReporter
+            .forRegistry(registry)
+            .prefixedWith("prefix")
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS).filter(MetricFilter.ALL)
+            .build(s);
+
+        final InOrder inOrder = inOrder(s);
+        inOrder.verify(s).connect();
+    }
 
     @Test
     public void doesNotReportStringGaugeValues() throws Exception {
@@ -62,9 +71,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD, never()).sendGauge("prefix.gauge", "value", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD, never()).sendGauge("prefix.gauge", "value");
     }
 
     @Test
@@ -73,9 +80,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1");
     }
 
     @Test
@@ -84,9 +89,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1");
     }
 
     @Test
@@ -95,9 +98,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1");
     }
 
     @Test
@@ -106,9 +107,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1");
     }
 
     @Test
@@ -117,9 +116,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1.10", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1.10");
     }
 
     @Test
@@ -128,9 +125,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1.10", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1.10");
     }
 
     @Test
@@ -139,9 +134,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1", tags);
-        inOrder.verify(statsD).close();        
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1");
     }
 
     @Test
@@ -150,9 +143,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.gauge", "1.10", tags);
-        inOrder.verify(statsD).close();        
+        inOrder.verify(statsD).sendGauge("prefix.gauge", "1.10");
     }
 
     @Test
@@ -164,9 +155,7 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendGauge("prefix.counter", "100", tags);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendGauge("prefix.counter", "100");
     }
 
     @Test
@@ -194,20 +183,17 @@ public class StatsDReporterTest {
 
         final InOrder inOrder = inOrder(statsD);
 
-        inOrder.verify(statsD).connect();
-        verify(statsD).sendGauge("prefix.histogram.count", "1", tags);
-        verify(statsD).sendGauge("prefix.histogram.max", "2", tags);
-        verify(statsD).sendGauge("prefix.histogram.mean", "3.00", tags);
-        verify(statsD).sendGauge("prefix.histogram.min", "4", tags);
-        verify(statsD).sendGauge("prefix.histogram.stddev", "5.00", tags);
-        verify(statsD).sendGauge("prefix.histogram.p50", "6.00", tags);
-        verify(statsD).sendGauge("prefix.histogram.p75", "7.00", tags);
-        verify(statsD).sendGauge("prefix.histogram.p95", "8.00", tags);
-        verify(statsD).sendGauge("prefix.histogram.p98", "9.00", tags);
-        verify(statsD).sendGauge("prefix.histogram.p99", "10.00", tags);
-        inOrder.verify(statsD).sendGauge("prefix.histogram.p999", "11.00", tags);
-
-        inOrder.verify(statsD).close();
+        verify(statsD).sendGauge("prefix.histogram.count", "1");
+        verify(statsD).sendGauge("prefix.histogram.max", "2");
+        verify(statsD).sendGauge("prefix.histogram.mean", "3.00");
+        verify(statsD).sendGauge("prefix.histogram.min", "4");
+        verify(statsD).sendGauge("prefix.histogram.stddev", "5.00");
+        verify(statsD).sendGauge("prefix.histogram.p50", "6.00");
+        verify(statsD).sendGauge("prefix.histogram.p75", "7.00");
+        verify(statsD).sendGauge("prefix.histogram.p95", "8.00");
+        verify(statsD).sendGauge("prefix.histogram.p98", "9.00");
+        verify(statsD).sendGauge("prefix.histogram.p99", "10.00");
+        inOrder.verify(statsD).sendGauge("prefix.histogram.p999", "11.00");
     }
 
     @Test
@@ -242,9 +228,7 @@ public class StatsDReporterTest {
 
         final InOrder inOrder = inOrder(statsD);
 
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendCounter("histogram.count", 1, null, null);
-        inOrder.verify(statsD).close();
+        inOrder.verify(statsD).sendCounter("histogram.count", 1);
     }
 
     @Test
@@ -261,14 +245,11 @@ public class StatsDReporterTest {
                 this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        verify(statsD).sendGauge("prefix.meter.count", "1", tags);
-        verify(statsD).sendGauge("prefix.meter.m1_rate", "2.00", tags);
-        verify(statsD).sendGauge("prefix.meter.m5_rate", "3.00", tags);
-        verify(statsD).sendGauge("prefix.meter.m15_rate", "4.00", tags);
-        inOrder.verify(statsD).sendGauge("prefix.meter.mean_rate", "5.00", tags);
-        inOrder.verify(statsD).close();
-
+        verify(statsD).sendGauge("prefix.meter.count", "1");
+        verify(statsD).sendGauge("prefix.meter.m1_rate", "2.00");
+        verify(statsD).sendGauge("prefix.meter.m5_rate", "3.00");
+        verify(statsD).sendGauge("prefix.meter.m15_rate", "4.00");
+        inOrder.verify(statsD).sendGauge("prefix.meter.mean_rate", "5.00");
     }
 
     @Test
@@ -293,10 +274,7 @@ public class StatsDReporterTest {
                 this.<Timer> map());
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        inOrder.verify(statsD).sendCounter("meter.count", 1, null, null);
-        inOrder.verify(statsD).close();
-
+        inOrder.verify(statsD).sendCounter("meter.count", 1);
     }
 
     @Test
@@ -334,23 +312,21 @@ public class StatsDReporterTest {
                 this.<Histogram> map(), this.<Meter> map(), map("timer", timer));
 
         final InOrder inOrder = inOrder(statsD);
-        inOrder.verify(statsD).connect();
-        verify(statsD).sendGauge("prefix.timer.max", "100.00", tags);
-        verify(statsD).sendGauge("prefix.timer.mean", "200.00", tags);
-        verify(statsD).sendGauge("prefix.timer.min", "300.00", tags);
-        verify(statsD).sendGauge("prefix.timer.stddev", "400.00", tags);
-        verify(statsD).sendGauge("prefix.timer.p50", "500.00", tags);
-        verify(statsD).sendGauge("prefix.timer.p75", "600.00", tags);
-        verify(statsD).sendGauge("prefix.timer.p95", "700.00", tags);
-        verify(statsD).sendGauge("prefix.timer.p98", "800.00", tags);
-        verify(statsD).sendGauge("prefix.timer.p99", "900.00", tags);
-        verify(statsD).sendGauge("prefix.timer.p999", "1000.00", tags);
-        verify(statsD).sendGauge("prefix.timer.count", "1", tags);
-        verify(statsD).sendGauge("prefix.timer.m1_rate", "3.00", tags);
-        verify(statsD).sendGauge("prefix.timer.m5_rate", "4.00", tags);
-        verify(statsD).sendGauge("prefix.timer.m15_rate", "5.00", tags);
-        inOrder.verify(statsD).sendGauge("prefix.timer.mean_rate", "2.00", tags);
-        inOrder.verify(statsD).close();
+        verify(statsD).sendGauge("prefix.timer.max", "100.00");
+        verify(statsD).sendGauge("prefix.timer.mean", "200.00");
+        verify(statsD).sendGauge("prefix.timer.min", "300.00");
+        verify(statsD).sendGauge("prefix.timer.stddev", "400.00");
+        verify(statsD).sendGauge("prefix.timer.p50", "500.00");
+        verify(statsD).sendGauge("prefix.timer.p75", "600.00");
+        verify(statsD).sendGauge("prefix.timer.p95", "700.00");
+        verify(statsD).sendGauge("prefix.timer.p98", "800.00");
+        verify(statsD).sendGauge("prefix.timer.p99", "900.00");
+        verify(statsD).sendGauge("prefix.timer.p999", "1000.00");
+        verify(statsD).sendGauge("prefix.timer.count", "1");
+        verify(statsD).sendGauge("prefix.timer.m1_rate", "3.00");
+        verify(statsD).sendGauge("prefix.timer.m5_rate", "4.00");
+        verify(statsD).sendGauge("prefix.timer.m15_rate", "5.00");
+        inOrder.verify(statsD).sendGauge("prefix.timer.mean_rate", "2.00");
     }
 
     private <T> SortedMap<String, T> map() {

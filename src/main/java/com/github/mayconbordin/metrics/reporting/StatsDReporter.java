@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 metrics-statsd contributors
+ * Copyright (C) 2013 metrics-statsd contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.jjagged.metrics.reporting;
+package com.github.mayconbordin.metrics.reporting;
 
-import com.github.jjagged.metrics.reporting.statsd.StatsD;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -26,13 +25,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.NotThreadSafe;
-
+import com.github.mayconbordin.metrics.reporting.statsd.StatsD;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -40,14 +33,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.concurrent.NotThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A reporter which publishes metric values to a StatsD server.
- * This maps timers and meters to gauges, since they have already been agggregated
- * in metrics by the time they appear here. Counters travel to statsD as themselves.
- * Note that the current version (1d9d9bf32aa5c7fe4f48d61165bed805cc8f3480) of etsy/statsd does not do anything with
- * tags; this code still accepts and sends them.
- * 
+ *
  * @see <a href="https://github.com/etsy/statsd">StatsD</a>
  */
 @NotThreadSafe
@@ -56,25 +48,29 @@ public class StatsDReporter extends ScheduledReporter {
 
     private final StatsD statsD;
     private final String prefix;
-    private final String[] tags;
     private final boolean convertToCounters;
 
     private StatsDReporter(final MetricRegistry registry, final StatsD statsD,
-            final String prefix, final String[] tags, final TimeUnit rateUnit,
-            final TimeUnit durationUnit, final MetricFilter filter,
-            final boolean convertToCounters) {
+                           final String prefix, final TimeUnit rateUnit,
+                           final TimeUnit durationUnit, final MetricFilter filter,
+                           final boolean convertToCounters) {
         super(registry, "statsd-reporter", filter, rateUnit, durationUnit);
         this.statsD = statsD;
         this.prefix = prefix;
-        this.tags = tags;
         this.convertToCounters = convertToCounters;
+        
+        try {
+            this.statsD.connect();
+        } catch (IOException ex) {
+            LOG.error("Unable to connect to StatsD", ex);
+            throw new RuntimeException(ex);
+        }
     }
 
     /**
      * Returns a new {@link Builder} for {@link StatsDReporter}.
-     * 
-     * @param registry
-     *            the registry to report
+     *
+     * @param registry the registry to report
      * @return a {@link Builder} instance for a {@link StatsDReporter}
      */
     public static Builder forRegistry(final MetricRegistry registry) {
@@ -82,15 +78,14 @@ public class StatsDReporter extends ScheduledReporter {
     }
 
     /**
-     * A builder for {@link StatsDReporter} instances. Defaults to not using a
-     * prefix, no tags, converting rates to events/second, converting durations to
-     * milliseconds, and not filtering metrics.
+     * A builder for {@link StatsDReporter} instances. Defaults to not using a prefix,
+     * converting rates to events/second, converting durations to milliseconds, and not
+     * filtering metrics.
      */
     @NotThreadSafe
     public static final class Builder {
         private final MetricRegistry registry;
         private String prefix;
-        private String[] tags;
         private TimeUnit rateUnit;
         private TimeUnit durationUnit;
         private MetricFilter filter;
@@ -99,7 +94,6 @@ public class StatsDReporter extends ScheduledReporter {
         private Builder(final MetricRegistry registry) {
             this.registry = registry;
             this.prefix = null;
-            this.tags = null;
             this.rateUnit = TimeUnit.SECONDS;
             this.durationUnit = TimeUnit.MILLISECONDS;
             this.filter = MetricFilter.ALL;
@@ -107,26 +101,15 @@ public class StatsDReporter extends ScheduledReporter {
 
         /**
          * Prefix all metric names with the given string.
-         * 
-         * @param prefix
-         *            the prefix for all metric names
+         *
+         * @param _prefix the prefix for all metric names
          * @return {@code this}
          */
-        public Builder prefixedWith(@Nullable final String prefix) {
-            this.prefix = prefix;
+        public Builder prefixedWith(final String _prefix) {
+            this.prefix = _prefix;
             return this;
         }
         
-        /**
-         * Add all given tags to all metrics
-         * @param tags the tags for all metrics        
-         * @return {@code this}
-         */
-        public Builder withTags(@Nullable final String... tags) {
-            this.tags = tags;
-            return this;
-        }
-
         /**
          * Whether {@link com.codahale.metrics.Meter} and {@link com.codahale.metrics.Histogram} items are converted to statsd counters.
          * @param convertToCounters true for the conversion, false to just generate many gauges.
@@ -139,80 +122,80 @@ public class StatsDReporter extends ScheduledReporter {
 
         /**
          * Convert rates to the given time unit.
-         * 
-         * @param rateUnit
-         *            a unit of time
+         *
+         * @param _rateUnit a unit of time
          * @return {@code this}
          */
-        public Builder convertRatesTo(final TimeUnit rateUnit) {
-            this.rateUnit = rateUnit;
+        public Builder convertRatesTo(final TimeUnit _rateUnit) {
+            this.rateUnit = _rateUnit;
             return this;
         }
 
         /**
          * Convert durations to the given time unit.
-         * 
-         * @param durationUnit
-         *            a unit of time
+         *
+         * @param _durationUnit a unit of time
          * @return {@code this}
          */
-        public Builder convertDurationsTo(final TimeUnit durationUnit) {
-            this.durationUnit = durationUnit;
+        public Builder convertDurationsTo(final TimeUnit _durationUnit) {
+            this.durationUnit = _durationUnit;
             return this;
         }
 
         /**
          * Only report metrics which match the given filter.
-         * 
-         * @param filter
-         *            a {@link MetricFilter}
+         *
+         * @param _filter a {@link MetricFilter}
          * @return {@code this}
          */
-        public Builder filter(final MetricFilter filter) {
-            this.filter = filter;
+        public Builder filter(final MetricFilter _filter) {
+            this.filter = _filter;
             return this;
         }
 
         /**
-         * Builds a {@link StatsDReporter} with the given properties, sending
-         * metrics to StatsD at the given host and port.
-         * 
-         * @param host
-         *            the hostname of the StatsD server.
-         * @param port
-         *            the port of the StatsD server. This is typically 8125.
+         * Builds a {@link StatsDReporter} with the given properties, sending metrics to StatsD at the given host and port.
+         *
+         * @param host the hostname of the StatsD server.
+         * @param port the port of the StatsD server. This is typically 8125.
          * @return a {@link StatsDReporter}
          */
         public StatsDReporter build(final String host, final int port) {
             return build(new StatsD(host, port));
         }
+        
+        /**
+         * Builds a {@link StatsDReporter} with the given properties, sending metrics to StatsD at the given host and port.
+         *
+         * @param host     the hostname of the StatsD server.
+         * @param port     the port of the StatsD server. This is typically 8125.
+         * @param protocol the protocol of the StatsD server (tcp or udp).
+         * @return a {@link StatsDReporter}
+         */
+        public StatsDReporter build(final String host, final int port, final String protocol) {
+            return build(new StatsD(host, port, protocol));
+        }
 
         /**
-         * Builds a {@link StatsDReporter} with the given properties, sending
-         * metrics using the given {@link StatsD} client.
-         * 
-         * @param statsD
-         *            a {@link StatsD} client
+         * Builds a {@link StatsDReporter} with the given properties, sending metrics using the
+         * given {@link StatsD} client.
+         *
+         * @param statsD a {@link StatsD} client
          * @return a {@link StatsDReporter}
          */
         public StatsDReporter build(final StatsD statsD) {
-            return new StatsDReporter(registry, statsD, prefix, tags, rateUnit,
-                    durationUnit, filter, convertToCounters);
+            return new StatsDReporter(registry, statsD, prefix, rateUnit, durationUnit, 
+                    filter, convertToCounters);
         }
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    // Metrics 3.0 interface specifies the raw Gauge type
     public void report(final SortedMap<String, Gauge> gauges,
-            final SortedMap<String, Counter> counters,
-            final SortedMap<String, Histogram> histograms,
-            final SortedMap<String, Meter> meters,
-            final SortedMap<String, Timer> timers) {
-
+                       final SortedMap<String, Counter> counters,
+                       final SortedMap<String, Histogram> histograms,
+                       final SortedMap<String, Meter> meters,
+                       final SortedMap<String, Timer> timers) {
         try {
-            statsD.connect();
-
             for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
                 reportGauge(entry.getKey(), entry.getValue());
             }
@@ -232,78 +215,71 @@ public class StatsDReporter extends ScheduledReporter {
             for (Map.Entry<String, Timer> entry : timers.entrySet()) {
                 reportTimer(entry.getKey(), entry.getValue());
             }
-        } catch (IOException e) {
-            LOG.warn("Unable to report to StatsD", statsD, e);
-        } finally {
-            try {
-                statsD.close();
-            } catch (IOException e) {
-                LOG.debug("Error disconnecting from StatsD", statsD, e);
-            }
+        } catch (Exception e) {
+            LOG.error("Unable to report to StatsD", e);
         }
     }
 
     private void reportTimer(final String name, final Timer timer) {
         final Snapshot snapshot = timer.getSnapshot();
 
-        statsD.sendGauge(prefix(name, "max"), formatNumber(convertDuration(snapshot.getMax())), tags);
-        statsD.sendGauge(prefix(name, "mean"), formatNumber(convertDuration(snapshot.getMean())), tags);
-        statsD.sendGauge(prefix(name, "min"), formatNumber(convertDuration(snapshot.getMin())), tags);
-        statsD.sendGauge(prefix(name, "stddev"), formatNumber(convertDuration(snapshot.getStdDev())), tags);
-        statsD.sendGauge(prefix(name, "p50"), formatNumber(convertDuration(snapshot.getMedian())), tags);
-        statsD.sendGauge(prefix(name, "p75"), formatNumber(convertDuration(snapshot.get75thPercentile())), tags);
-        statsD.sendGauge(prefix(name, "p95"), formatNumber(convertDuration(snapshot.get95thPercentile())), tags);
-        statsD.sendGauge(prefix(name, "p98"), formatNumber(convertDuration(snapshot.get98thPercentile())), tags);
-        statsD.sendGauge(prefix(name, "p99"), formatNumber(convertDuration(snapshot.get99thPercentile())), tags);
-        statsD.sendGauge(prefix(name, "p999"), formatNumber(convertDuration(snapshot.get999thPercentile())), tags);
+        statsD.sendGauge(prefix(name, "max"), formatNumber(convertDuration(snapshot.getMax())));
+        statsD.sendGauge(prefix(name, "mean"), formatNumber(convertDuration(snapshot.getMean())));
+        statsD.sendGauge(prefix(name, "min"), formatNumber(convertDuration(snapshot.getMin())));
+        statsD.sendGauge(prefix(name, "stddev"), formatNumber(convertDuration(snapshot.getStdDev())));
+        statsD.sendGauge(prefix(name, "p50"), formatNumber(convertDuration(snapshot.getMedian())));
+        statsD.sendGauge(prefix(name, "p75"), formatNumber(convertDuration(snapshot.get75thPercentile())));
+        statsD.sendGauge(prefix(name, "p95"), formatNumber(convertDuration(snapshot.get95thPercentile())));
+        statsD.sendGauge(prefix(name, "p98"), formatNumber(convertDuration(snapshot.get98thPercentile())));
+        statsD.sendGauge(prefix(name, "p99"), formatNumber(convertDuration(snapshot.get99thPercentile())));
+        statsD.sendGauge(prefix(name, "p999"), formatNumber(convertDuration(snapshot.get999thPercentile())));
 
         reportMetered(name, timer);
     }
 
     private void reportMetered(final String name, final Metered meter) {
         if (convertToCounters) {
-            statsD.sendCounter(prefix(name, "count"), meter.getCount(), null, tags);
+            statsD.sendCounter(prefix(name, "count"), meter.getCount());
         } else {
-            statsD.sendGauge(prefix(name, "count"), formatNumber(meter.getCount()), tags);
-            statsD.sendGauge(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())), tags);
-            statsD.sendGauge(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())), tags);
-            statsD.sendGauge(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())), tags);
-            statsD.sendGauge(prefix(name, "mean_rate"), formatNumber(convertRate(meter.getMeanRate())), tags);
+            statsD.sendGauge(prefix(name, "count"), formatNumber(meter.getCount()));
+            statsD.sendGauge(prefix(name, "m1_rate"), formatNumber(convertRate(meter.getOneMinuteRate())));
+            statsD.sendGauge(prefix(name, "m5_rate"), formatNumber(convertRate(meter.getFiveMinuteRate())));
+            statsD.sendGauge(prefix(name, "m15_rate"), formatNumber(convertRate(meter.getFifteenMinuteRate())));
+            statsD.sendGauge(prefix(name, "mean_rate"), formatNumber(convertRate(meter.getMeanRate())));
         }
     }
 
     private void reportHistogram(final String name, final Histogram histogram) {
         final Snapshot snapshot = histogram.getSnapshot();
+        
         if (convertToCounters) {
-            statsD.sendCounter(prefix(name, "count"), histogram.getCount(), null, tags);
+            statsD.sendCounter(prefix(name, "count"), histogram.getCount());
         } else {
-            statsD.sendGauge(prefix(name, "count"), formatNumber(histogram.getCount()), tags);
-            statsD.sendGauge(prefix(name, "max"), formatNumber(snapshot.getMax()), tags);
-            statsD.sendGauge(prefix(name, "mean"), formatNumber(snapshot.getMean()), tags);
-            statsD.sendGauge(prefix(name, "min"), formatNumber(snapshot.getMin()), tags);
-            statsD.sendGauge(prefix(name, "stddev"), formatNumber(snapshot.getStdDev()), tags);
-            statsD.sendGauge(prefix(name, "p50"), formatNumber(snapshot.getMedian()), tags);
-            statsD.sendGauge(prefix(name, "p75"), formatNumber(snapshot.get75thPercentile()), tags);
-            statsD.sendGauge(prefix(name, "p95"), formatNumber(snapshot.get95thPercentile()), tags);
-            statsD.sendGauge(prefix(name, "p98"), formatNumber(snapshot.get98thPercentile()), tags);
-            statsD.sendGauge(prefix(name, "p99"), formatNumber(snapshot.get99thPercentile()), tags);
-            statsD.sendGauge(prefix(name, "p999"), formatNumber(snapshot.get999thPercentile()), tags);
+            statsD.sendGauge(prefix(name, "count"), formatNumber(histogram.getCount()));
+            statsD.sendGauge(prefix(name, "max"), formatNumber(snapshot.getMax()));
+            statsD.sendGauge(prefix(name, "mean"), formatNumber(snapshot.getMean()));
+            statsD.sendGauge(prefix(name, "min"), formatNumber(snapshot.getMin()));
+            statsD.sendGauge(prefix(name, "stddev"), formatNumber(snapshot.getStdDev()));
+            statsD.sendGauge(prefix(name, "p50"), formatNumber(snapshot.getMedian()));
+            statsD.sendGauge(prefix(name, "p75"), formatNumber(snapshot.get75thPercentile()));
+            statsD.sendGauge(prefix(name, "p95"), formatNumber(snapshot.get95thPercentile()));
+            statsD.sendGauge(prefix(name, "p98"), formatNumber(snapshot.get98thPercentile()));
+            statsD.sendGauge(prefix(name, "p99"), formatNumber(snapshot.get99thPercentile()));
+            statsD.sendGauge(prefix(name, "p999"), formatNumber(snapshot.get999thPercentile()));
         }
     }
 
     private void reportCounter(final String name, final Counter counter) {
-        statsD.sendGauge(prefix(name), formatNumber(counter.getCount()), tags);
+        statsD.sendGauge(prefix(name), formatNumber(counter.getCount()));
     }
 
-    // Metrics 3.0 passes us the raw Gauge type
-    private void reportGauge(final String name, final Gauge<?> gauge) {
+    private void reportGauge(final String name, final Gauge gauge) {
         final String value = format(gauge.getValue());
         if (value != null) {
-            statsD.sendGauge(prefix(name), value, tags);
+            statsD.sendGauge(prefix(name), value);
         }
     }
 
-    @Nullable
     private String format(final Object o) {
         if (o instanceof Float) {
             return formatNumber(((Float) o).doubleValue());

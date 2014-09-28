@@ -2,42 +2,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
-
-    <groupId>com.github.jjagged</groupId>
+    <groupId>com.github.mayconbordin</groupId>
     <artifactId>metrics-statsd</artifactId>
     <name>Metrics Statsd Support</name>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <url>http://github.com/jjagged/metrics-statsd/</url>
-    <description>Statsd reporter for codahale/metrics with support for tags.</description>
+    <url>http://github.com/mayconbordin/metrics-statsd/</url>
+    <description>Statsd reporter for codahale/metrics with support TCP/UDP protocols.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <metrics.version>3.0.1</metrics.version>
-        <slf4j.version>1.7.5</slf4j.version>
-
-        <!-- If you want to build from an IDE like IDEA or Eclipse and use GnuPG version >= v2.0,
-        set the parameter to true in order to get a nice GUI dialog for entering the passphrase.
-        If you want to build from a console, set it to false or override it via -DgpgGuiPassphrase=false. -->
-        <gpgGuiPassphrase>true</gpgGuiPassphrase>
-
-        <!-- If you have multiple GnuPG signing keys on your keyring, the first one is used as the default key.
-        In order to use another one, specify the desired key ID here, otherwise you may just leave the parameter
-        empty or override it via -DgpgKeyId=. It does not hurt to
-        always specify it, though. -->
-        <gpgKeyId>878EF09F</gpgKeyId>
+        <metrics.version>3.1.0</metrics.version>
+        <slf4j.version>1.7.7</slf4j.version>
     </properties>
 
     <developers>
         <developer>
-            <name>Hannes Heijkenskjöld</name>
-            <email>jjagged@gmail.com</email>
+            <name>Maycon Viana Bordin</name>
+            <email>mayconbordin@gmail.com</email>
         </developer>
     </developers>
 
@@ -49,32 +32,9 @@
         </license>
     </licenses>
 
-    <scm>
-        <connection>scm:git:ssh://github.com/jjagged/metrics-statsd.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jjagged/metrics-statsd.git</developerConnection>
-        <url>https://github.com/jjagged/metrics-statsd</url>
-      <tag>HEAD</tag>
-  </scm>
-
-    <issueManagement>
-        <system>github</system>
-        <url>https://github.com/jjagged/metrics-statsd/issues#issue/</url>
-    </issueManagement>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <dependencies>
         <dependency>
-            <groupId>com.codahale.metrics</groupId>
+            <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
             <version>${metrics.version}</version>
             <type>jar</type>
@@ -122,24 +82,6 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.4</version>
-                <configuration>
-                    <useAgent>${gpgGuiPassphrase}</useAgent>
-                    <keyname>${gpgKeyId}</keyname>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
@@ -183,100 +125,6 @@
                         <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.4.2</version>
-                <configuration>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                    <preparationGoals>clean test</preparationGoals>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.8.1</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>            
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.6.4.201312101107</version>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>                            
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <rule implementation="org.jacoco.maven.RuleConfiguration">
-                                    <element>BUNDLE</element>
-                                    <limits>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>INSTRUCTION</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.90</minimum>
-                                        </limit>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>LINE</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.90</minimum>
-                                        </limit>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>BRANCH</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.90</minimum>
-                                        </limit>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>COMPLEXITY</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.90</minimum>
-                                        </limit>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>METHOD</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.90</minimum>
-                                        </limit>
-                                        <limit implementation="org.jacoco.report.check.Limit">
-                                            <counter>CLASS</counter>
-                                            <value>MISSEDCOUNT</value>
-                                            <maximum>0</maximum>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <effort>Max</effort>
-                    <threshold>Low</threshold>
-                    <xmlOutput>true</xmlOutput>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
