@@ -10,7 +10,7 @@ The 3.x version of the Metrics library uses the builder pattern to construct rep
 create a StatsdReporter and report out metrics every 15 seconds.
 
  ```java
- final Statsd statsd = new Statsd("localhost", port, "tpc");
+ final Statsd statsd = new Statsd("localhost", port, "tcp");
 
  StatsdReporter reporter StatsdReporter.forRegistry(registry)
          .prefixedWith("foo")
