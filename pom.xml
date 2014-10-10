@@ -5,7 +5,7 @@
     <groupId>com.github.mayconbordin</groupId>
     <artifactId>metrics-statsd</artifactId>
     <name>Metrics Statsd Support</name>
-    <version>1.1</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
     <url>https://github.com/Morgaroth/metrics-statsd</url>
     <description>Statsd reporter for codahale/metrics with support TCP/UDP protocols.</description>
