@@ -13,26 +13,22 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.mayconbordin.metrics.reporting.statsd;
+package io.github.morgaroth.metrics_statsd.metrics.reporting.statsd;
 
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Fail.failBecauseExceptionWasNotThrown;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.StatsD;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.UDPSocket;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class StatsDTest {
     InetSocketAddress address = new InetSocketAddress("example.com", 1234);
@@ -130,7 +126,6 @@ public class StatsDTest {
     public void testSendFailure() throws Exception {
         statsD.connect();
         doThrow(new IOException()).when(socket).send(any(String.class));
-        
         statsD.sendGauge("name", "value");
         assertThat(statsD.getFailures()).isEqualTo(1);
     }

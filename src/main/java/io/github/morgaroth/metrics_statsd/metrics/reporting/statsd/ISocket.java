@@ -1,4 +1,4 @@
-package com.github.mayconbordin.metrics.reporting.statsd;
+package io.github.morgaroth.metrics_statsd.metrics.reporting.statsd;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

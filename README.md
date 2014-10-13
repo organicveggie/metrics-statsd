@@ -1,6 +1,6 @@
 # metrics-statsd
 
-Statsd reporter for [codahale/metrics] (https://github.com/codahale/metrics), based on Sean Laurent's [metrics-statsd] (https://github.com/organicveggie/metrics-statsd), Mike Keesey's [metrics-statsd] (https://github.com/ReadyTalk/metrics-statsd) and Hannes Heijkenskjöld [metrics-statsd] (https://github.com/jjagged/metrics-statsd), with added support for the TCP protocol.
+Statsd reporter for [codahale/metrics] (https://github.com/codahale/metrics), based on Sean Laurent's [metrics-statsd] (https://github.com/organicveggie/metrics-statsd), Mike Keesey's [metrics-statsd] (https://github.com/ReadyTalk/metrics-statsd), Hannes Heijkenskjöld [metrics-statsd] (https://github.com/jjagged/metrics-statsd) and Mayconbordin [metrics-statsd] (https://github.com/mayconbordin/metrics-statsd) with added support for the TCP protocol.
 
 Only version 3.x of the Metrics library is supported.
 

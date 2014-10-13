@@ -1,9 +1,9 @@
-package com.github.mayconbordin.metrics.reporting.statsd;
+package io.github.morgaroth.metrics_statsd.metrics.reporting.statsd;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.ISocket;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.SocketFactory;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.TCPSocket;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.UDPSocket;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

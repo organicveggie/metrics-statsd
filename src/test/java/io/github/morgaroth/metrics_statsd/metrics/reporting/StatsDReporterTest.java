@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.mayconbordin.metrics.reporting;
+package io.github.morgaroth.metrics_statsd.metrics.reporting;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -23,7 +23,8 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-import com.github.mayconbordin.metrics.reporting.statsd.StatsD;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.StatsDReporter;
+import io.github.morgaroth.metrics_statsd.metrics.reporting.statsd.StatsD;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.SortedMap;

@@ -13,14 +13,16 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.github.mayconbordin.metrics.reporting.statsd;
+package io.github.morgaroth.metrics_statsd.metrics.reporting.statsd;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.annotation.concurrent.NotThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +34,7 @@ public class StatsD implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(StatsD.class);
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]+");
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+    public static final Locale locale = Locale.ENGLISH;
 
     private InetSocketAddress address;
     private ISocket socket;
@@ -46,7 +49,7 @@ public class StatsD implements Closeable {
     public StatsD(final String host, final int port) {
         this(host, port, SocketFactory.UDP);
     }
-    
+
     /**
      * Creates a new client which connects to the given address with the given protocol.
      *
@@ -68,12 +71,12 @@ public class StatsD implements Closeable {
         this.address = address;
         this.socket = SocketFactory.newInstance(protocol);
     }
-    
+
     /**
      * Creates a new client which connects to the given address and socket factory.
      *
-     * @param address  the address of the Carbon server
-     * @param socket   the socket
+     * @param address the address of the Carbon server
+     * @param socket  the socket
      */
     public StatsD(final InetSocketAddress address, ISocket socket) {
         this.address = address;
@@ -92,32 +95,35 @@ public class StatsD implements Closeable {
         if (address.getHostName() != null) {
             this.address = new InetSocketAddress(address.getHostName(), address.getPort());
         }
-        
+
         socket.connect(address, UTF_8);
     }
 
     /**
      * Sends the gauge to the server.
+     *
      * @param name  the name of the gauge
      * @param value the value of the gauge
      */
     public void sendGauge(final String name, final String value) {
-        String formatted = String.format("%s:%s|g", sanitize(name), sanitize(value));
+        String formatted = String.format(locale, "%s:%s|g", sanitize(name), sanitize(value));
         send(formatted);
     }
-    
+
     /**
      * Sends the counter to the server.
+     *
      * @param name  the name of the counter
      * @param value the amount by which the counter will be incremented
      */
     public void sendCounter(final String name, final long value) {
-        String formatted = String.format("%s:%d|c", sanitize(name), value);
+        String formatted = String.format(locale, "%s:%d|c", sanitize(name), value);
         send(formatted);
     }
-    
+
     /**
      * Sends the counter to the server.
+     *
      * @param name       the name of the counter
      * @param value      the amount by which the counter will be incremented
      * @param sampleRate the rate by which the counter is being sampled (between 0 and 1)
@@ -126,23 +132,25 @@ public class StatsD implements Closeable {
         if (sampleRate < 0 || sampleRate > 1) {
             throw new IllegalArgumentException("Sample rate should be a value between 0 and 1");
         }
-        
-        String formatted = String.format("%s:%d|c|@%.2f", sanitize(name), value, sampleRate);
+
+        String formatted = String.format(locale, "%s:%d|c|@%.2f", sanitize(name), value, sampleRate);
         send(formatted);
     }
-    
+
     /**
      * Sends a timing duration.
+     *
      * @param name  the name of the timer
      * @param value the duration of the timing in milliseconds
      */
     public void sendTiming(final String name, final float value) {
-        String formatted = String.format("%s:%.2f|ms", sanitize(name), value);
+        String formatted = String.format(locale, "%s:%.2f|ms", sanitize(name), value);
         send(formatted);
     }
-    
+
     /**
      * Sends the formatted message to the statsd server.
+     *
      * @param message the message to be send
      */
     private void send(final String message) {
@@ -151,8 +159,8 @@ public class StatsD implements Closeable {
             failures = 0;
         } catch (IOException e) {
             failures++;
-            
-            String msg = String.format("Unable to send packet to statsd at '%s:%s'", address.getHostName(), address.getPort());
+
+            String msg = String.format(locale, "Unable to send packet to statsd at '%s:%s'", address.getHostName(), address.getPort());
 
             if (failures == 1) {
                 LOG.warn(msg, e);
