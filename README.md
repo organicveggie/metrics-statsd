@@ -4,6 +4,12 @@ Statsd reporter for [codahale/metrics] (https://github.com/codahale/metrics), ba
 
 Only version 3.x of the Metrics library is supported.
 
+## Integration
+
+```scala
+libraryDependencies += "io.github.morgaroth" %% metrics-statsd" % "1.5.1"
+```
+
 ## Quick Start
 
 The 3.x version of the Metrics library uses the builder pattern to construct reporters. Below is an example of how to

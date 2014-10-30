@@ -2,9 +2,11 @@ sonatypeSettings
 
 //profileName := "morgaroth"
 
-name := "Metrics Statsd Support"
+description := "Metrics Statsd Support"
 
-version := "1.5.0"
+name := "metrics-statsd"
+
+version := "1.5.1"
 
 organization := "io.github.morgaroth"
 
