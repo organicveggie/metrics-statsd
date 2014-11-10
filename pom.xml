@@ -5,14 +5,14 @@
     <groupId>com.bealetech</groupId>
     <artifactId>metrics-statsd</artifactId>
     <name>Metrics Statsd Support</name>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>http://github.com/organicveggie/metrics-statsd/</url>
     <description>Statsd reporter for codahale/metrics.</description>
 
     <properties>
-        <metrics.version>3.0.1</metrics.version>
-        <slf4j.version>1.7.5</slf4j.version>
+        <metrics.version>3.1.0</metrics.version>
+        <slf4j.version>1.7.7</slf4j.version>
     </properties>
 
     <developers>
@@ -59,7 +59,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.codahale.metrics</groupId>
+            <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
             <version>${metrics.version}</version>
             <type>jar</type>
