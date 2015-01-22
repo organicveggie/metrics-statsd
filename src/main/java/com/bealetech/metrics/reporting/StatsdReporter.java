@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.studyblue.metrics.reporting;
+package com.bealetech.metrics.reporting;
 
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.*;
@@ -25,15 +25,22 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketException;
+import java.net.InetAddress;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 public class StatsdReporter extends AbstractPollingReporter implements MetricProcessor<Long> {
+
+    /*
+      MTU size of the host handling the PDU (most of the case it will be 1500) -
+      size of the IP header (20 bytes) -
+      size of UDP header (8 bytes)
+
+      1500 MTU - 20 IP hdr - 8 UDP hdr  = 1472 bytes
+    */
+    private static final int MAX_UDPDATAGRAM_LENGTH = 1472;
 
     public static enum StatType { COUNTER, TIMER, GAUGE }
 
@@ -43,16 +50,21 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
     protected final MetricPredicate predicate;
     protected final Locale locale = Locale.US;
     protected final Clock clock;
+
     protected final UDPSocketProvider socketProvider;
+    protected DatagramSocket currentSocket = null;
+
     protected final VirtualMachineMetrics vm;
+
     protected Writer writer;
     protected ByteArrayOutputStream outputData;
 
+    private boolean prependNewline = false;
     private boolean printVMMetrics = true;
 
     public interface UDPSocketProvider {
-        DatagramSocket get() throws SocketException;
-        DatagramPacket newPacket(ByteArrayOutputStream out) throws SocketException;
+        DatagramSocket get() throws Exception;
+        DatagramPacket newPacket(ByteArrayOutputStream out);
     }
 
     public StatsdReporter(String host, int port) throws IOException {
@@ -111,23 +123,19 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
 
     @Override
     public void run() {
-        DatagramSocket socket = null;
+
         try {
-            socket = this.socketProvider.get();
-            outputData.reset();
-            writer = new BufferedWriter(new OutputStreamWriter(this.outputData));
+            currentSocket = this.socketProvider.get();
+            resetWriterState();
 
             final long epoch = clock.time() / 1000;
-            if (this.printVMMetrics) {
+            if (printVMMetrics) {
                 printVmMetrics(epoch);
             }
             printRegularMetrics(epoch);
 
             // Send UDP data
-            writer.flush();
-            DatagramPacket packet = this.socketProvider.newPacket(outputData);
-            packet.setData(outputData.toByteArray());
-            socket.send(packet);
+            sendDatagram();
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Error writing to Statsd", e);
@@ -142,10 +150,25 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 }
             }
         } finally {
-            if (socket != null) {
-                socket.close();
+            if (currentSocket != null) {
+                currentSocket.close();
             }
             writer = null;
+        }
+    }
+
+    private void resetWriterState() {
+        outputData.reset();
+        prependNewline = false;
+        writer = new BufferedWriter(new OutputStreamWriter(this.outputData));
+    }
+
+    private void sendDatagram() throws IOException {
+        writer.flush();
+        if (outputData.size() > 0) { // Don't send an empty datagram
+            DatagramPacket packet = this.socketProvider.newPacket(outputData);
+            packet.setData(outputData.toByteArray());
+            currentSocket.send(packet);
         }
     }
 
@@ -308,6 +331,9 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         }
 
         try {
+            if (prependNewline) {
+                writer.write("\n");
+            }
             if (!prefix.isEmpty()) {
                 writer.write(prefix);
             }
@@ -316,8 +342,14 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
             writer.write(value);
             writer.write("|");
             writer.write(statTypeStr);
-            writer.write('\n');
+            prependNewline = true;
             writer.flush();
+
+            if (outputData.size() > MAX_UDPDATAGRAM_LENGTH) {
+                // Need to send our UDP packet now before it gets too big.
+                sendDatagram();
+                resetWriterState();
+            }
         } catch (IOException e) {
             LOG.error("Error sending to Statsd:", e);
         }
@@ -334,13 +366,14 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
         }
 
         @Override
-        public DatagramSocket get() throws SocketException {
+        public DatagramSocket get() throws Exception {
             return new DatagramSocket();
         }
 
         @Override
-        public DatagramPacket newPacket(ByteArrayOutputStream out) throws SocketException {
+        public DatagramPacket newPacket(ByteArrayOutputStream out) {
             byte[] dataBuffer;
+
             if (out != null) {
                 dataBuffer = out.toByteArray();
             }
@@ -348,9 +381,11 @@ public class StatsdReporter extends AbstractPollingReporter implements MetricPro
                 dataBuffer = new byte[8192];
             }
 
-            return new DatagramPacket(dataBuffer, dataBuffer.length, new InetSocketAddress(this.host, this.port));
+            try {
+                return new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getByName(this.host), this.port);
+            } catch (Exception e) {
+                return null;
+            }
         }
-
-
     }
 }
