@@ -84,7 +84,9 @@ public class Statsd implements Closeable {
     public void close() throws IOException {
         DatagramPacket packet = newPacket(outputData);
 
+        logger.trace("Sending {} bytes of data to StatsD ", outputData.size());
         packet.setData(outputData.toByteArray());
+        logger.trace("Monitoring data to be sent to StatsD is :: {}", outputData.toString());
         datagramSocket.send(packet);
 
         if(datagramSocket != null) {

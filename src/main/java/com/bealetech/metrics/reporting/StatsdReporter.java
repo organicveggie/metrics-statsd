@@ -133,6 +133,7 @@ public class StatsdReporter extends ScheduledReporter {
                        SortedMap<String, Timer> timers) {
 
         try {
+            LOGGER.trace("StatsD reporter triggered");
             statsd.connect();
 
             for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
@@ -283,6 +284,8 @@ public class StatsdReporter extends ScheduledReporter {
             return format(((Integer) o).longValue());
         } else if (o instanceof Long) {
             return format(((Long) o).longValue());
+        } else if (o instanceof Boolean) {
+            return ((Boolean) o)? "1": "0";
         }
         return null;
     }
