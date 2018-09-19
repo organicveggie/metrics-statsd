@@ -1,4 +1,3 @@
-sonatypeSettings
 
 //profileName := "morgaroth"
 
@@ -25,6 +24,7 @@ libraryDependencies ++= Seq(
 crossScalaVersions := Seq(
   "2.10.0"
   ,"2.11.0"
+  ,"2.12.0"
 )
 
 pomExtra := <url>https://github.com/Morgaroth/morgaroth-utils</url>
